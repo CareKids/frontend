@@ -1,5 +1,29 @@
+body {
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important; 
+}
+
+
 .App {
     background-color: #EAF3F5;
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
+    height: auto;
+}
+
+.logo {
+    max-width: 100px;
+    height: auto;
+}
+
+nav {
+    background-color: white;
+    height: 80px;
+}
+
+.navbar-nav .nav-item {
+    margin-right: 60px;
+}
+
+.navbar-nav .dropdown-toggle::after {
+    display: none;
 }
