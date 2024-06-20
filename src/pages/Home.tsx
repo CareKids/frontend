@@ -1,6 +1,16 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import Header from '../components/Header'
+import Footer from '../components/Footer'
 
 function Home() {
+    const navigate = useNavigate();
+  
+    const handleClick = () => {
+      navigate('/search');
+    };
+
     return (
         <div className="App">
             <Header></Header>
@@ -18,7 +28,7 @@ function Home() {
                                 어떤 곳을 방문하고 싶은가요?<br/>
                                 케어kids가 외출 장소 고민을 도와드릴게요!<br/><br/>
                             </p>
-                            <button className="btn btn-primary">키즈존 찾기</button>
+                            <button className="btn btn-primary" onClick={handleClick}>키즈존 찾기</button>
                         </div>
                     </div>
                     <div className="col-md-5">
@@ -34,7 +44,7 @@ function Home() {
                         <span className="small ms-2">24개월 미만</span>
                     </div>
                     <div className="col-md-6 text-md-end mt-2 mt-md-0">
-                        <a href="/play" className="small">더보기</a>
+                        <a href="/play" className="small text-reset text-decoration-none">더보기</a>
                     </div>
                 </div>
 
@@ -93,7 +103,7 @@ function Home() {
                         <span className="small ms-2">서울시 동작구</span>
                     </div>
                     <div className="col-md-6 text-md-end mt-2 mt-md-0">
-                        <a href="/policy" className="small">더보기</a>
+                        <a href="/policy" className="small text-reset text-decoration-none">더보기</a>
                     </div>
                 </div>
 
@@ -145,7 +155,8 @@ function Home() {
                 </div>
             </div>
 
-            <footer>copyright. AIVLE SCHOOL AI TEAM 5</footer>
+
+            <Footer></Footer>
         </div>
     );
 }

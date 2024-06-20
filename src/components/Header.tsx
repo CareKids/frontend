@@ -33,8 +33,8 @@ function Menu() {
             subMenuItems: [
                 { title: '장소', link: '/place' },
                 { title: '먹거리', link: '/food' },
-                { title: '클래스', link: '/class' },
-                { title: '진료기관', link: '/hospital' },
+                { title: '주말 어린이집', link: '/class' },
+                { title: '긴급 진료기관', link: '/hospital' },
             ],
         },
         {
