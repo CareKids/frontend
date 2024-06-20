@@ -2,7 +2,6 @@ body {
     font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important; 
 }
 
-
 .App {
     background-color: #EAF3F5;
     width: 100vw;
@@ -26,4 +25,16 @@ nav {
 
 .navbar-nav .dropdown-toggle::after {
     display: none;
+}
+
+.btn-primary {
+    --bs-btn-color: #fff !important;
+    --bs-btn-hover-color: #fff !important;
+    --bs-btn-active-color: #fff !important;
+    --bs-btn-disabled-color: #fff !important;
+}
+  
+.btn-outline-primary {
+    --bs-btn-hover-color: #fff !important;
+    --bs-btn-active-color: #fff !important;
 }
