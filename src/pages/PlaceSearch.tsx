@@ -63,9 +63,9 @@ function PlaceSearch() {
                                 <img src={process.env.PUBLIC_URL + "/assets/kids_zone.png"} className="img-fluid m-4" alt="welcome" style={{ maxWidth: '100px', height: '20px' }} />
                                 <p className="m-4"><b>01 <span className="line"></span></b> <span className="text-black-50">02</span></p>
                             </div>
-                            <h4 className="text-left mt-3 m-4 mb-1 text-black-50">
+                            <p className="text-left mt-3 m-4 mb-1 text-black-50">
                                 오늘은 어디로 가볼까요?
-                            </h4>
+                            </p>
                             <h2 className="text-left mt-1 m-4">
                                 <b>오늘 방문할 예정인 지역</b>을 <br />
                                 선택해 주세요.
@@ -94,9 +94,9 @@ function PlaceSearch() {
                                 <img src={process.env.PUBLIC_URL + "/assets/kids_zone.png"} className="img-fluid m-4" alt="welcome" style={{ maxWidth: '100px', height: '20px' }} />
                                 <p className="m-4"><span className="text-black-50">01</span> <b>02 <span className="line"></span></b></p>
                             </div>
-                            <h4 className="text-left mt-3 m-4 mb-1 text-black-50">
+                            <p className="text-left mt-3 m-4 mb-1 text-black-50">
                                 어떤 곳을 가고 싶은가요?
-                            </h4>
+                            </p>
                             <h2 className="text-left mt-1 m-4">
                                 <b>오늘 방문하고 싶은 장소</b>의<br />
                                 느낌을 설명해 주세요.
