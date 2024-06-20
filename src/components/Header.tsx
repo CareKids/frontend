@@ -25,7 +25,7 @@ function Menu() {
         {
             title: '키즈존 찾기',
             subMenuItems: [
-                { title: '키즈존 검색', link: '/search' },
+                { title: '키즈존 찾기', link: '/search' },
             ],
         },
         {

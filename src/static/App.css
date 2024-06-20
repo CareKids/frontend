@@ -38,3 +38,11 @@ nav {
     --bs-btn-hover-color: #fff !important;
     --bs-btn-active-color: #fff !important;
 }
+
+.line {
+    display: inline-block;
+    width: 50px;
+    border-top: 2px solid black;
+    margin: 10px;
+    vertical-align: middle;
+  }
