@@ -54,7 +54,7 @@ function Menu() {
     ];
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-light">
+        <nav className="navbar navbar-expand-lg navbar-light border-bottom">
             <div className="container">
                 <a className="navbar-brand" href="/">
                     <img className="logo" src={process.env.PUBLIC_URL + "/assets/logo.png"} alt="Logo" />
