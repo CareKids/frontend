@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useRecoilValue } from 'recoil';
+import { loginState } from '../atom';
 
 type MenuItem = {
     title: string;
@@ -8,6 +10,7 @@ type MenuItem = {
 
 function Menu() {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const isLoggedIn = useRecoilValue(loginState);
 
     const handleMouseEnter = (menu: string) => {
         setActiveMenu(menu);
@@ -32,7 +35,6 @@ function Menu() {
             title: '자료실',
             subMenuItems: [
                 { title: '장소', link: '/place' },
-                { title: '먹거리', link: '/food' },
                 { title: '주말 어린이집', link: '/class' },
                 { title: '긴급 진료기관', link: '/hospital' },
             ],
@@ -82,7 +84,12 @@ function Menu() {
                 </ul>
 
                 <div className="ml-auto">
-                    <button className="btn btn-outline-primary">로그인</button>
+                    <a 
+                        href={isLoggedIn ? "/mypage" : "/login"} 
+                        className="text-reset text-decoration-none"
+                    >
+                        {isLoggedIn ? '마이페이지' : '로그인'}
+                    </a>
                 </div>
             </div>
         </nav>

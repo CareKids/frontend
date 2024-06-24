@@ -7,7 +7,6 @@ import PlaceSearch from './PlaceSearch'
 import PlaceMap from './PlaceMap'
 import Hospital from './Hospital'
 import PlaceList from './PlaceList'
-import Food from './Food'
 import ClassList from './ClassList'
 import PlayInfo from './Play'
 import Policy from './Policy'
@@ -26,7 +25,6 @@ const AppRouter = () => {
                 <Route path="/map" element={<PlaceMap />} />
                 <Route path="/hospital" element={<Hospital />} />
                 <Route path="/place" element={<PlaceList />} />
-                <Route path="/food" element={<Food />} />
                 <Route path="/class" element={<ClassList />} />
                 <Route path="/play" element={<PlayInfo />} />
                 <Route path="/policy" element={<Policy />} />
