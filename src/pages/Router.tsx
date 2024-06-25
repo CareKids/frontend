@@ -10,7 +10,9 @@ import PlaceList from './PlaceList'
 import PlaceDetail from './PlaceDetail'
 import ClassList from './ClassList'
 import PlayInfo from './Play'
+import PlayDetail from './PlayDetail';
 import Policy from './Policy'
+import PolicyDetail from './PolicyDetail';
 import Board from './Board'
 import BoardDetail from './BoardDetail'
 import QnA from './QnA'
@@ -32,7 +34,9 @@ const AppRouter = () => {
                 <Route path="/place/:id" element={<PlaceDetail />} />
                 <Route path="/class" element={<ClassList />} />
                 <Route path="/play" element={<PlayInfo />} />
+                <Route path="/play/:id" element={<PlayDetail />} />
                 <Route path="/policy" element={<Policy />} />
+                <Route path="/policy/:id" element={<PolicyDetail />} />
                 <Route path="/board" element={<Board />} />
                 <Route path="/board/:id" element={<BoardDetail />} />
                 <Route path="/qna" element={<QnA />} />

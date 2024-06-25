@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 import Header from '../components/Header'
@@ -17,7 +18,7 @@ function Home() {
             <div className="container">
                 <div className="row">
                     <div className="col-md-7 d-flex align-items-center">
-                        <div className="d-flex flex-column justify-content-center align-items-start text-center text-md-start">
+                        <div className="d-flex flex-column justify-content-center align-items-start text-center text-md-start mt-4">
                             <h1><b>우리 아이와 어딜 가야 할까?</b></h1>
                             <p>
                                 <br/>
@@ -51,6 +52,7 @@ function Home() {
                 <div className="row mt-3">
                     <div className="col-md-3 mb-4">
                         <div className="card" style={{ borderRadius: '10px', backgroundColor: '#ffffff' }}>
+                            <Link to={`/place/1`} style={{ textDecoration: 'none', color: 'inherit' }}>
                             <div className="card-body">
                                 <h4 className="card-title">카드 제목 1</h4>
                                 <p className="card-text mb-4">
@@ -58,10 +60,12 @@ function Home() {
                                 </p>
                                 <p className="card-text small text-muted">2024-06-19</p>
                             </div>
+                            </Link>
                         </div>
                     </div>
                     <div className="col-md-3 mb-4">
                         <div className="card" style={{ borderRadius: '10px', backgroundColor: '#ffffff' }}>
+                            <Link to={`/place/2`} style={{ textDecoration: 'none', color: 'inherit' }}>
                             <div className="card-body">
                                 <h4 className="card-title">카드 제목 2</h4>
                                 <p className="card-text mb-4">
@@ -69,10 +73,12 @@ function Home() {
                                 </p>
                                 <p className="card-text small text-muted">2024-06-19</p>
                             </div>
+                            </Link>
                         </div>
                     </div>
                     <div className="col-md-3 mb-4">
                         <div className="card" style={{ borderRadius: '10px', backgroundColor: '#ffffff' }}>
+                            <Link to={`/place/3`} style={{ textDecoration: 'none', color: 'inherit' }}>
                             <div className="card-body">
                                 <h4 className="card-title">카드 제목 3</h4>
                                 <p className="card-text mb-4">
@@ -80,6 +86,7 @@ function Home() {
                                 </p>
                                 <p className="card-text small text-muted">2024-06-19</p>
                             </div>
+                            </Link>
                         </div>
                     </div>
                     <div className="col-md-3 mb-4">
@@ -110,6 +117,7 @@ function Home() {
                 <div className="row mt-3">
                     <div className="col-md-3 mb-4">
                         <div className="card" style={{ borderRadius: '10px', backgroundColor: '#ffffff' }}>
+                            <Link to={`/policy/1`} style={{ textDecoration: 'none', color: 'inherit' }}>
                             <div className="card-body">
                                 <h4 className="card-title">카드 제목 1</h4>
                                 <p className="card-text mb-4">
@@ -117,6 +125,7 @@ function Home() {
                                 </p>
                                 <p className="card-text small text-muted">2024-06-19</p>
                             </div>
+                            </Link>
                         </div>
                     </div>
                     <div className="col-md-3 mb-4">
