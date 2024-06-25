@@ -14,6 +14,8 @@ import Policy from './Policy'
 import Board from './Board'
 import BoardDetail from './BoardDetail'
 import QnA from './QnA'
+import QnADetail from './QnADetail'
+import QnAWrite from './QnAWrite';
 import Mypage from './Mypage'
 
 const AppRouter = () => {
@@ -34,6 +36,8 @@ const AppRouter = () => {
                 <Route path="/board" element={<Board />} />
                 <Route path="/board/:id" element={<BoardDetail />} />
                 <Route path="/qna" element={<QnA />} />
+                <Route path="/qna/:id" element={<QnADetail />} />
+                <Route path="/qna/write" element={<QnAWrite />} />
                 <Route path="/mypage" element={<Mypage />} />
             </Routes>
         </Router>
