@@ -12,6 +12,7 @@ import ClassList from './ClassList'
 import PlayInfo from './Play'
 import Policy from './Policy'
 import Board from './Board'
+import BoardDetail from './BoardDetail'
 import QnA from './QnA'
 import Mypage from './Mypage'
 
@@ -31,6 +32,7 @@ const AppRouter = () => {
                 <Route path="/play" element={<PlayInfo />} />
                 <Route path="/policy" element={<Policy />} />
                 <Route path="/board" element={<Board />} />
+                <Route path="/board/:id" element={<BoardDetail />} />
                 <Route path="/qna" element={<QnA />} />
                 <Route path="/mypage" element={<Mypage />} />
             </Routes>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -33,8 +34,9 @@ const Board: React.FC = () => {
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
   
+  const navigate = useNavigate();
   const handleRowClick = (postId: number) => {
-    console.log(`Clicked ${postId}`);
+    navigate(`/board/${postId}`);
   };
 
   return (
