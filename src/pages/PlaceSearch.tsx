@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Container } from 'reactstrap';
 import { useNavigate } from 'react-router-dom';
 
 import Header from '../components/Header'
@@ -39,7 +40,7 @@ function PlaceSearch() {
     return (
         <div className='App'>
             <Header></Header>
-            <div className="container d-flex justify-content-center align-items-center">
+            <Container className="container d-flex justify-content-center align-items-center">
                 {step === 1 && (
                     <div className="w-75 mt-4 d-flex justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
                         <div className='mt-5 text-center'>
@@ -114,7 +115,7 @@ function PlaceSearch() {
                         </div>
                     </div>
                 )}
-            </div>
+            </Container>
             <Footer></Footer>
         </div>
     );

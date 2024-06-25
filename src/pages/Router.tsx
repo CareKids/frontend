@@ -7,6 +7,7 @@ import PlaceSearch from './PlaceSearch'
 import PlaceMap from './PlaceMap'
 import Hospital from './Hospital'
 import PlaceList from './PlaceList'
+import PlaceDetail from './PlaceDetail'
 import ClassList from './ClassList'
 import PlayInfo from './Play'
 import Policy from './Policy'
@@ -25,6 +26,7 @@ const AppRouter = () => {
                 <Route path="/map" element={<PlaceMap />} />
                 <Route path="/hospital" element={<Hospital />} />
                 <Route path="/place" element={<PlaceList />} />
+                <Route path="/place/:id" element={<PlaceDetail />} />
                 <Route path="/class" element={<ClassList />} />
                 <Route path="/play" element={<PlayInfo />} />
                 <Route path="/policy" element={<Policy />} />

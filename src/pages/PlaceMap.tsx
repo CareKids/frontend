@@ -1,9 +1,19 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button, Input, InputGroup, Card, CardImg, CardBody, CardTitle, CardText, Row, Col } from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
 
 import Header from '../components/Header';
 import './PlaceMap.css'
+
+interface SearchResult {
+    category: string;
+    placeName: string;
+    address: string;
+    openingHours: string;
+    imageUrl: string;
+    tags: string[];
+  }
 
 const PlaceMap: React.FC = () => {
     useEffect(() => {
@@ -31,6 +41,33 @@ const PlaceMap: React.FC = () => {
       navigate('/search');
     };
 
+    const searchResults: SearchResult[] = [
+        {
+          category: '음식점',
+          placeName: '음식점 A',
+          address: '서울시 강남구 역삼동',
+          openingHours: '09:00 - 21:00',
+          imageUrl: 'https://via.placeholder.com/150?text=Restaurant',
+          tags: ['맛집', '한식'],
+        },
+        {
+          category: '카페',
+          placeName: '카페 B',
+          address: '서울시 강남구 신사동',
+          openingHours: '08:00 - 20:00',
+          imageUrl: 'https://via.placeholder.com/150?text=Cafe',
+          tags: ['커피', '디저트'],
+        },
+        {
+          category: '쇼핑',
+          placeName: '상점 C',
+          address: '서울시 강남구 청담동',
+          openingHours: '10:00 - 22:00',
+          imageUrl: 'https://via.placeholder.com/150?text=Shop',
+          tags: ['의류', '액세서리'],
+        },
+      ];
+
     return (        
         <div className='App'>
             <Header />
@@ -41,24 +78,43 @@ const PlaceMap: React.FC = () => {
                             <button className="btn btn-primary w-100" onClick={handleClick}>다시 찾아보기</button>
                         </div>
                         <div>
-                            {Array.from({ length: 5 }).map((_, index) => (
-                                <div key={index} className="p-3 mb-2 border-bottom">
-                                    <div style={{ width: '100%', height: '150px', overflow: 'hidden' }}>
-                                        <img 
-                                            src={`https://via.placeholder.com/150?text=Image+${index + 1}`} 
-                                            alt={`Image ${index + 1}`} 
-                                            className="img-fluid" 
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                        />
-                                    </div>
-                                    <h5 className="mt-3">제목 {index + 1}</h5>
-                                    <div className="ml-auto d-flex">
-                                        <div className="btn btn-outline-primary rounded-5" style={{ fontSize: '12px', marginRight: '5px' }}>태그1</div>
-                                        <div className="btn btn-outline-primary rounded-5" style={{ fontSize: '12px', marginRight: '5px' }}>태그2</div>
-                                        <div className="btn btn-outline-primary rounded-5" style={{ fontSize: '12px', marginRight: '5px' }}>태그3</div>
-                                    </div>
+                        {searchResults.map((result, index) => (
+                            <Card className="mb-3" style={{ border: 'none', borderBottom: '1px solid #dee2e6' }}>
+                            <CardBody>
+                                <Row>
+                                <CardImg 
+                                    src={result.imageUrl} 
+                                    alt={result.placeName} 
+                                    className="img-fluid rounded" 
+                                    style={{
+                                    objectFit: 'cover',
+                                    height: '200px',
+                                    width: '100%'
+                                    }} 
+                                />
+                                <CardTitle tag="h5" className="mb-3 mt-3"><strong>{result.placeName}</strong></CardTitle>
+                                <CardText>
+                                    <strong>주소 · </strong> {result.address}<br />
+                                    <strong>운영시간 · </strong> {result.openingHours}
+                                </CardText>
+                                </Row>
+                                <div className="mt-3">
+                                {result.tags.map((tag, tagIndex) => (
+                                    <Button
+                                    key={tagIndex}
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    className="me-2 mb-2 rounded-pill"
+                                    style={{ fontSize: '0.8rem', pointerEvents: 'none' }}
+                                    >
+                                    {tag}
+                                    </Button>
+                                ))}
                                 </div>
-                            ))}
+                            </CardBody>
+                            </Card>
+                        ))}
                         </div>
                         <div className="d-flex justify-content-center">
                             <Pagination>
