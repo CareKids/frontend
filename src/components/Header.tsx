@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRecoilValue } from 'recoil';
 import { loginState } from '../atom';
 
@@ -8,20 +7,21 @@ type MenuItem = {
     subMenuItems?: { title: string; link: string }[];
 };
 
-function Menu() {
+function Header() {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const isLoggedIn = useRecoilValue(loginState);
 
+    const [isNavCollapsed, setIsNavCollapsed] = useState(true);
+    const handleNavCollapse = () => {
+        setIsNavCollapsed(!isNavCollapsed);
+    }
+    
     const handleMouseEnter = (menu: string) => {
         setActiveMenu(menu);
     };
 
     const handleMouseLeave = () => {
         setActiveMenu(null);
-    };
-
-    const handleClick = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-        event.preventDefault();
     };
 
     const menuItems: MenuItem[] = [
@@ -56,26 +56,52 @@ function Menu() {
     ];
 
     return (
+        <>
         <nav className="navbar navbar-expand-lg navbar-light border-bottom">
             <div className="container">
                 <a className="navbar-brand" href="/">
                     <img className="logo" src={process.env.PUBLIC_URL + "/assets/logo.png"} alt="Logo" />
                 </a>
+                <button 
+                    className="navbar-toggler" 
+                    type="button" 
+                    data-toggle="collapse" 
+                    data-target="#navbarSupportedContent" 
+                    aria-controls="navbarSupportedContent" 
+                    aria-expanded={!isNavCollapsed ? true : false} 
+                    aria-label="Toggle navigation"
+                    onClick={handleNavCollapse}
+                >
+                    <span className="navbar-toggler-icon"></span>
+                </button>
 
-                <ul className="navbar-nav">
+                <ul className="navbar-nav mr-auto d-none d-lg-flex">
                     {menuItems.map((menuItem, index) => (
-                        <li key={index} className={`nav-item dropdown ${activeMenu === menuItem.title ? 'show' : ''}`}
+                        <li 
+                            key={index} 
+                            className={`nav-item dropdown ${activeMenu === menuItem.title ? 'show' : ''}`}
                             onMouseEnter={() => handleMouseEnter(menuItem.title)}
-                            onMouseLeave={handleMouseLeave}>
-                            <a className={`nav-link dropdown-toggle ${menuItem.subMenuItems ? 'cursor-pointer' : ''}`}
-                                onClick={handleClick}
-                                id={`navbarDropdown${index}`} role="button" aria-haspopup="true" aria-expanded="false">
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            <a 
+                                className={`nav-link dropdown-toggle ${menuItem.subMenuItems ? '' : 'active'}`}
+                                id={`navbarDropdown${index}`}
+                                role="button"
+                                data-toggle="dropdown"
+                                aria-haspopup="true"
+                                aria-expanded={activeMenu === menuItem.title ? 'true' : 'false'}
+                            >
                                 {menuItem.title}
                             </a>
                             {menuItem.subMenuItems && (
-                                <div className={`dropdown-menu ${activeMenu === menuItem.title ? 'show' : ''}`} aria-labelledby={`navbarDropdown${index}`}>
+                                <div 
+                                    className={`dropdown-menu ${activeMenu === menuItem.title ? 'show' : ''}`} 
+                                    aria-labelledby={`navbarDropdown${index}`}
+                                >
                                     {menuItem.subMenuItems.map((subMenuItem, subIndex) => (
-                                        <a key={subIndex} className="dropdown-item" href={subMenuItem.link}>{subMenuItem.title}</a>
+                                        <a key={subIndex} className="dropdown-item" href={subMenuItem.link}>
+                                            {subMenuItem.title}
+                                        </a>
                                     ))}
                                 </div>
                             )}
@@ -83,17 +109,49 @@ function Menu() {
                     ))}
                 </ul>
 
-                <div className="ml-auto">
+                <div className="ml-auto d-none d-lg-block">
                     <a 
                         href={isLoggedIn ? "/mypage" : "/login"} 
-                        className="text-reset text-decoration-none"
+                        className="btn my-2 my-sm-0"
                     >
                         {isLoggedIn ? '마이페이지' : '로그인'}
                     </a>
                 </div>
             </div>
         </nav>
+
+        <div className={`${isNavCollapsed ? 'collapse' : ''} navbar-collapse bg-white d-lg-none`} id="navbarSupportedContent">
+            <div className="container">
+                <ul className="navbar-nav mr-auto p-3" style={{ listStyle: 'none', padding: 0 }}>
+                    {menuItems.map((menuItem, index) => (
+                        <li key={index} className="nav-item mb-2">
+                            <span style={{ fontWeight: 'bold' }}>{menuItem.title}</span>
+                            {menuItem.subMenuItems && (
+                                <ul style={{ listStyle: 'none', paddingLeft: '1rem' }}>
+                                    {menuItem.subMenuItems.map((subMenuItem, subIndex) => (
+                                        <li key={subIndex}>
+                                            <a className="nav-link" href={subMenuItem.link}>
+                                                {subMenuItem.title}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </li>
+                    ))}
+                    <li className="nav-item">
+                        <a
+                            href={isLoggedIn ? "/mypage" : "/login"} 
+                            className="my-2 my-sm-0 text-reset text-decoration-none"
+                        >
+                            <span style={{ fontWeight: 'bold' }}>{isLoggedIn ? '마이페이지' : '로그인'}</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        </>
     );
 }
 
-export default Menu;
+export default Header;
