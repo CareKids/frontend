@@ -59,9 +59,12 @@ function Header() {
         <>
         <nav className="navbar navbar-expand-lg navbar-light border-bottom">
             <div className="container">
+                {/* 로고 */}
                 <a className="navbar-brand" href="/">
                     <img className="logo" src={process.env.PUBLIC_URL + "/assets/logo.png"} alt="Logo" />
                 </a>
+
+                {/* 모바일 메뉴 버튼 */}
                 <button 
                     className="navbar-toggler" 
                     type="button" 
@@ -75,6 +78,7 @@ function Header() {
                     <span className="navbar-toggler-icon"></span>
                 </button>
 
+                {/* 데스크탑 메뉴 */}
                 <ul className="navbar-nav mr-auto d-none d-lg-flex">
                     {menuItems.map((menuItem, index) => (
                         <li 
@@ -120,6 +124,7 @@ function Header() {
             </div>
         </nav>
 
+        {/* 모바일 메뉴 */}
         <div className={`${isNavCollapsed ? 'collapse' : ''} navbar-collapse bg-white d-lg-none`} id="navbarSupportedContent">
             <div className="container">
                 <ul className="navbar-nav mr-auto p-3" style={{ listStyle: 'none', padding: 0 }}>
