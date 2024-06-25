@@ -43,78 +43,77 @@ const PlaceDetail: React.FC = () => {
 
   return (
     <div className='App'>
-        <Header></Header>
-        <Container className="mt-4">
-            <Button
-            color="secondary"
-            outline
-            size="sm"
-            className="mb-2 rounded-pill"
-            style={{
-                fontSize: '0.8rem',
-                borderColor: '#6c757d',
-                color: '#6c757d',
-                pointerEvents: 'none' 
-            }}
-            >
-            {placeDetail.category}
-            </Button>
-            <h2 className="mb-4 mt-2"><strong>{placeDetail.name}</strong></h2>
+      <Header></Header>
+      <Container className="mt-4">
+          <Button
+          color="secondary"
+          outline
+          size="sm"
+          className="mb-2 rounded-pill"
+          style={{
+              fontSize: '0.8rem',
+              borderColor: '#6c757d',
+              color: '#6c757d',
+              pointerEvents: 'none' 
+          }}
+          >
+          {placeDetail.category}
+          </Button>
+          <h2 className="mb-4 mt-2"><strong>{placeDetail.name}</strong></h2>
+          
+          <Card className="mb-4" style={{ border: 'none' }}>
+          <CardBody>
+            <Row className="mb-3">
+            {placeDetail.features.map((feature, index) => (
+                <Col key={index} xs="auto" className="text-center m-2">
+                <FontAwesomeIcon icon={feature.icon} size="2x" className="mb-2" />
+                <div style={{ fontSize: '0.8rem', pointerEvents: 'none' }}>{feature.label}</div>
+                </Col>
+            ))}
+            </Row>
             
-            <Card className="mb-4" style={{ border: 'none' }}>
-            <CardBody>
-                <Row className="mb-3">
-                {placeDetail.features.map((feature, index) => (
-                    <Col key={index} xs="auto" className="text-center m-2">
-                    <FontAwesomeIcon icon={feature.icon} size="2x" className="mb-2" />
-                    <div style={{ fontSize: '0.8rem', pointerEvents: 'none' }}>{feature.label}</div>
-                    </Col>
-                ))}
-                </Row>
-                
-                <hr style={{ border: 'none', height: '2px', backgroundColor: '#e9ecef' }} />
-                
-                <Row>
-                <Col md={6}>
-                    <p><FontAwesomeIcon icon={faMapMarkerAlt} className="me-2" />{placeDetail.address}</p>
-                    <p><FontAwesomeIcon icon={faPhone} className="me-2" />{placeDetail.phone}</p>
-                    <p><FontAwesomeIcon icon={faClock} className="me-2" />{placeDetail.openingHours}</p>
-                </Col>
-                <Col md={6}>
-                    <p><strong>가격 정보</strong></p>
-                    <p>{placeDetail.price}</p>
-                </Col>
-                </Row>
-                
-                <hr style={{ border: 'none', height: '2px', backgroundColor: '#e9ecef' }} />
-                
-                <div>
-                {placeDetail.tags.map((tag, index) => (
-                    <Button
-                    key={index}
-                    color="primary"
-                    outline
-                    size="sm"
-                    className="me-2 mb-2 rounded-pill"
-                    style={{ fontSize: '0.8rem', pointerEvents: 'none' }}
-                    >
-                    {tag}
-                    </Button>
-                ))}
-                </div>
-            </CardBody>
-            </Card>
-
-            <div className="text-center mt-4">
-            <Button color="primary" onClick={handleGoBack}>
-                <FontAwesomeIcon icon={faList} className="me-2" />
-                목록으로 돌아가기
-            </Button>
+            <hr style={{ border: 'none', height: '2px', backgroundColor: '#e9ecef' }} />
+            
+            <Row>
+            <Col md={6}>
+                <p><FontAwesomeIcon icon={faMapMarkerAlt} className="me-2" />{placeDetail.address}</p>
+                <p><FontAwesomeIcon icon={faPhone} className="me-2" />{placeDetail.phone}</p>
+                <p><FontAwesomeIcon icon={faClock} className="me-2" />{placeDetail.openingHours}</p>
+            </Col>
+            <Col md={6}>
+                <p><strong>가격 정보</strong></p>
+                <p>{placeDetail.price}</p>
+            </Col>
+            </Row>
+            
+            <hr style={{ border: 'none', height: '2px', backgroundColor: '#e9ecef' }} />
+            
+            <div>
+            {placeDetail.tags.map((tag, index) => (
+                <Button
+                key={index}
+                color="primary"
+                outline
+                size="sm"
+                className="me-2 mb-2 rounded-pill"
+                style={{ fontSize: '0.8rem', pointerEvents: 'none' }}
+                >
+                {tag}
+                </Button>
+            ))}
             </div>
-        </Container>
-        <Footer></Footer>
+        </CardBody>
+        </Card>
+
+        <div className="text-center mt-4">
+        <Button color="primary" onClick={handleGoBack}>
+            <FontAwesomeIcon icon={faList} className="me-2" />
+            목록으로 돌아가기
+        </Button>
+        </div>
+      </Container>
+      <Footer></Footer>
     </div>
-    
   );
 };
 
