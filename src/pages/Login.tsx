@@ -57,7 +57,7 @@ const Login = () => {
                         </div>
 
                         <div className="text-center mt-4 mb-3">
-                            로그인 아이디가 없으신가요? <a href="#" className="text-reset">회원 가입</a>
+                            로그인 아이디가 없으신가요? <a href="/signin" className="text-reset">회원 가입</a>
                         </div>
                     </Form>
                 </CardBody>
