@@ -2,11 +2,10 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Button, Card, CardBody } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faList, faFileAlt, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faList, faDownload } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { StringLiteral } from 'typescript';
 
 interface Attachment {
   name: string;

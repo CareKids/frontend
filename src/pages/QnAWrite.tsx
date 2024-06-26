@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Form, FormGroup, Label, Input, Button, Row, Col, ListGroup, ListGroupItem } from 'reactstrap';
+import { Container, Form, FormGroup, Label, Input, Button, ListGroup, ListGroupItem } from 'reactstrap';
 import { Editor } from '@tinymce/tinymce-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -72,9 +72,7 @@ const QnAWrite: React.FC = () => {
                 menubar: false,
                 statusbar: false,
                 plugins: [
-                  'advlist autolink lists link image charmap print preview anchor',
-                  'searchreplace visualblocks code fullscreen',
-                  'insertdatetime media table paste code help wordcount'
+                  ''
                 ],
                 toolbar: 'undo redo | formatselect | ',
                 content_style: 'body { font-family: Pretendard, Helvetica, Arial, sans-serif; font-size:14px }'

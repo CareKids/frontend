@@ -8,7 +8,7 @@ import { faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-interface Play {
+interface PlayList {
   id: number;
   title: string;
   type: string;
@@ -23,7 +23,7 @@ const Play: React.FC = () => {
     };
     
     // 임시 데이터
-    const plays: Play[] = [
+    const plays: PlayList[] = [
         {
         id: 1,
         title: '공놀이',
