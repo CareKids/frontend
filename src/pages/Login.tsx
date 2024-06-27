@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 import NaverButton from '../components/NaverButton';
+import GoogleButton from '../components/GoogleButton';
 
 const Login = () => {
   return (
@@ -39,13 +40,7 @@ const Login = () => {
                             <div className='mb-3'>간편 로그인</div>
 
                             <div className="text-center mb-3">
-                                <a href="#" className="me-2" onClick={() => alert("Google 로그인")}>
-                                    <img 
-                                        src={process.env.PUBLIC_URL + "/assets/btn_google.png"} 
-                                        alt="구글 로그인" 
-                                        style={{ width: '45px', height: '45px' }}
-                                    />
-                                </a>
+                                <GoogleButton />
                                 <NaverButton />
                             </div>
 
