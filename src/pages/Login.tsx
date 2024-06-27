@@ -32,7 +32,7 @@ const Login = () => {
                             </Button>
                         </div>
                         <div className="mt-3 text-end">
-                            <a href="#" className="text-decoration-none small text-reset">비밀번호 재설정</a>
+                            <a href="/password" className="text-decoration-none small text-reset">비밀번호 재설정</a>
                         </div>
 
                         <div className="text-center">
