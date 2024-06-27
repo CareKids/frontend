@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Signin from './Signin'
+import SigninExternal from './SigninExternal'
 import Login from './Login'
 import NaverLoginCallback from './LoginNaverCallback';
 import Home from './Home'
@@ -28,6 +29,7 @@ const AppRouter = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/login/naver/auth" Component={NaverLoginCallback} />
                 <Route path="/signin" element={<Signin />} />
+                <Route path="/signin/info" element={<SigninExternal />} />
                 <Route path="/" element={<Home />} />
                 <Route path="/search" element={<PlaceSearch />} />
                 <Route path="/map" element={<PlaceMap />} />

@@ -68,7 +68,7 @@ const Signin = () => {
                         <Form onSubmit={handleSubmit}>
                         <FormGroup className="mb-3">
                             <label>이메일</label>
-                            <Row className="mt-1">
+                            <Row className="mt-1 g-2">
                             <Col xs="4">
                                 <Input
                                 type="text"
@@ -173,7 +173,7 @@ const Signin = () => {
 
                         <FormGroup className="mb-4">
                             <label>닉네임</label>
-                            <Row>
+                            <Row className="mt-1 g-2">
                             <Col xs="8">
                                 <Input
                                 type="text"
@@ -205,7 +205,7 @@ const Signin = () => {
                         <FormGroup className="mb-4">
                             <label>아이의 연령대</label>
                             {childrenAges.map((age, index) => (
-                            <Row key={index} className="mt-2">
+                            <Row key={index} className="mt-2 g-2">
                                 <Col xs="8">
                                 <Input type="select" className="pt-2 pb-2" value={age} onChange={(e) => {
                                     const newAges = [...childrenAges];
