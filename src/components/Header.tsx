@@ -149,7 +149,7 @@ function Header() {
                             href={isLoggedIn ? "/mypage" : "/login"} 
                             className="my-2 my-sm-0 text-reset text-decoration-none"
                         >
-                            <span style={{ fontWeight: 'bold' }}>{isLoggedIn ? '마이페이지' : '로그인'}</span>
+                            <span style={{ fontWeight: 'bold' }}>{isLoggedIn ? '내 정보' : '로그인'}</span>
                         </a>
                     </li>
                 </ul>
