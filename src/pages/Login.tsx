@@ -5,6 +5,8 @@ import { Button, Form, FormGroup, Input, Card, CardBody, Container } from 'react
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
+import NaverButton from '../components/NaverButton';
+
 const Login = () => {
   return (
     <div className='App'>
@@ -14,11 +16,11 @@ const Login = () => {
                 <CardBody>
                     <h2 className="text-center mt-4 mb-5">로그인</h2>
                     <Form>
-                        <FormGroup className="mb-3" controlId="formBasicEmail">
+                        <FormGroup className="mb-3" controlid="formBasicEmail">
                             <label>이메일</label>
                             <Input type="email" className='mt-1 pt-2 pb-2'/>
                         </FormGroup>
-                        <FormGroup className="mb-4" controlId="formBasicPassword">
+                        <FormGroup className="mb-4" controlid="formBasicPassword">
                             <label>비밀번호</label>
                             <Input type="password" className='mt-1 pt-2 pb-2' />
                         </FormGroup>
@@ -44,13 +46,7 @@ const Login = () => {
                                         style={{ width: '45px', height: '45px' }}
                                     />
                                 </a>
-                                <a href="#" onClick={() => alert("Naver 로그인")}>
-                                    <img 
-                                        src={process.env.PUBLIC_URL + "/assets/btn_naver.png"} 
-                                        alt="네이버 로그인" 
-                                        style={{ width: '45px', height: '45px' }}
-                                    />
-                                </a>
+                                <NaverButton />
                             </div>
 
                             <hr className="border-1 mt-5"/>
