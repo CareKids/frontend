@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Input, InputGroup, Card, CardImg, CardBody, CardTitle, CardText, Row, Col } from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
 
 import Header from '../components/Header';
 import './PlaceMap.css'
@@ -74,19 +72,7 @@ const PlaceMap: React.FC = () => {
             tags: ['의류', '액세서리'],
         },
       ];
-
       
-    const [likedPlaces, setLikedPlaces] = useState<string[]>([]);
-    
-    const handleLike = (id: string) => {
-        setLikedPlaces(prev => {
-            const isLiked = prev.includes(id);
-            return isLiked ? prev.filter(placeId => placeId !== id) : [...prev, id];
-        });
-    };
-    
-    const isLiked = (id: string) => likedPlaces.includes(id);
-
     return (        
         <div className='App'>
             <Header />
@@ -114,19 +100,6 @@ const PlaceMap: React.FC = () => {
                                     <Row className="align-items-center mb-3 mt-3 pe-0">
                                         <Col>
                                             <CardTitle tag="h5" className="mb-0"><strong>{result.placeName}</strong></CardTitle>
-                                        </Col>
-                                        <Col xs="auto" className='pe-0'>
-                                            <Button
-                                            color="link"
-                                            className="p-0"
-                                            onClick={() => handleLike(result.id)}
-                                            >
-                                            <FontAwesomeIcon 
-                                                icon={isLiked(result.id) ? faHeart : farHeart} 
-                                                size="lg"
-                                                className={isLiked(result.id) ? "text-danger" : "text-secondary"}
-                                            />
-                                            </Button>
                                         </Col>
                                         </Row>
                                     <CardText>

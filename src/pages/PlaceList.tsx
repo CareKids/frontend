@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button, Input, InputGroup, Card, CardImg, CardBody, CardTitle, CardText, Row, Col, Container } from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faFilter, faHeart } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
+import { faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -17,7 +16,6 @@ interface SearchResult {
   openingHours: string;
   imageUrl: string;
   tags: string[];
-  likes: number;
 }
 
 const SearchResult: React.FC = () => {
@@ -37,7 +35,6 @@ const SearchResult: React.FC = () => {
       openingHours: '09:00 - 21:00',
       imageUrl: 'https://via.placeholder.com/150?text=Restaurant',
       tags: ['맛집', '한식'],
-      likes: 10,
     },
     {
       id: 2,
@@ -47,7 +44,6 @@ const SearchResult: React.FC = () => {
       openingHours: '08:00 - 20:00',
       imageUrl: 'https://via.placeholder.com/150?text=Cafe',
       tags: ['커피', '디저트'],
-      likes: 10,
     },
     {
       id: 3,
@@ -57,23 +53,8 @@ const SearchResult: React.FC = () => {
       openingHours: '10:00 - 22:00',
       imageUrl: 'https://via.placeholder.com/150?text=Shop',
       tags: ['의류', '액세서리'],
-      likes: 10,
     },
   ];
-
-  // 좋아요 클릭 여부
-  const [likedPlaces, setLikedPlaces] = useState<number[]>([]);
-
-  // 좋아요 버튼 클릭 시 동작
-  const handleLike = (id: number) => {
-    setLikedPlaces(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(placeId => placeId !== id);
-      } else {
-        return [...prev, id];
-      }
-    });
-  };
 
   const handleSearch = () => {
     // 검색하기 버튼 클릭 시 실행
@@ -135,22 +116,6 @@ const SearchResult: React.FC = () => {
                       <Col xs={8}>
                         <Button color="secondary" size="sm" className="mb-2" disabled>{result.category}</Button>
                         <CardTitle tag="h5" className="mb-2"><strong>{result.placeName}</strong></CardTitle>
-                        <div className="d-flex align-items-center mb-3">
-                          <Button
-                            color="link"
-                            className="p-0 me-1"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleLike(result.id);
-                            }}
-                          >
-                            <FontAwesomeIcon 
-                              icon={likedPlaces.includes(result.id) ? faHeart : farHeart} 
-                              className={likedPlaces.includes(result.id) ? "text-danger" : "text-secondary"}
-                            />
-                          </Button>
-                          <span>{result.likes}</span>
-                        </div>
                         <CardText>
                           <strong>주소 · </strong> {result.address}<br />
                           <strong>운영시간 · </strong> {result.openingHours}

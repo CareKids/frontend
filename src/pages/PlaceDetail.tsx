@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Card, CardBody, Row, Col, Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar, faChild, faPhone, faClock, faMapMarkerAlt, faList, faHeart } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
+import { faCar, faChild, faPhone, faClock, faMapMarkerAlt, faList } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -18,7 +17,6 @@ interface PlaceDetail {
   price: string;
   tags: string[];
   features: { icon: any; label: string }[];
-  likes: number;
 }
 
 const PlaceDetail: React.FC = () => {
@@ -36,24 +34,11 @@ const PlaceDetail: React.FC = () => {
       { icon: faCar, label: '주차 가능' },
       { icon: faChild, label: '놀이 시설' },
     ],
-    likes: 10,
   };
   
   const navigate = useNavigate();
   const handleGoBack = () => {
     navigate(-1);
-  };
-
-  const [likedPlaces, setLikedPlaces] = useState<string[]>([]);
-  const handleLike = (id: string) => {
-    setLikedPlaces(prev => {
-      const isLiked = prev.includes(id);
-      const newLikedPlaces = isLiked 
-        ? prev.filter(placeId => placeId !== id)
-        : [...prev, id];
-
-      return newLikedPlaces;
-    });
   };
 
   return (
@@ -74,23 +59,7 @@ const PlaceDetail: React.FC = () => {
         >
         {placeDetail.category}
         </Button>
-        <h2 className="mt-2"><strong>{placeDetail.name}</strong></h2>
-        <div className='mb-4'>
-          <Button
-            color="link"
-            className="p-0 me-1"
-            onClick={(e) => {
-              e.preventDefault();
-              handleLike(placeDetail.id);
-            }}
-          >
-            <FontAwesomeIcon 
-              icon={likedPlaces.includes(placeDetail.id) ? faHeart : farHeart} 
-              className={likedPlaces.includes(placeDetail.id) ? "text-danger" : "text-secondary"}
-            />
-          </Button>
-          <span>{placeDetail.likes}</span>
-        </div>
+        <h2 className="mt-2 mb-4"><strong>{placeDetail.name}</strong></h2>
         
         <Card className="mb-4" style={{ border: 'none' }}>
         <CardBody>
