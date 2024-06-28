@@ -36,7 +36,7 @@ const QnADetail: React.FC = () => {
   const post: Post = {
     id: id || '',
     title: '문의사항입니다',
-    content: '질문내용입니다.',
+    content: '질문내용입니다.\n질문내용입니다',
     author: '작성자',
     date: '2024-06-25 10:00',
     progress: '처리완료',
@@ -45,7 +45,7 @@ const QnADetail: React.FC = () => {
       { name: '첨부파일2.jpg', url: '/path/to/file2.jpg' },
     ],
     answer: {
-      content: '답변 내용입니다. 문의하신 내용에 대해 다음과 같이 답변 드립니다.',
+      content: '답변 내용입니다.\n문의하신 내용에 대해 다음과 같이 답변 드립니다.',
       author: '관리자',
       date: '2024-06-26 14:00',
     },
@@ -81,7 +81,7 @@ const QnADetail: React.FC = () => {
             
         <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
         {/* 게시글 내용 */}
-        <div>{post.content}</div>
+        <div style={{ whiteSpace: 'pre-wrap' }}>{post.content}</div>
         
         {/* 첨부파일 */}
         {post.attachments && post.attachments.length > 0 && (
@@ -101,7 +101,7 @@ const QnADetail: React.FC = () => {
         {post.answer && (
           <Card className="mt-4 mb-4">
             <CardBody>
-              <div>{post.answer.content}</div>
+              <div style={{ whiteSpace: 'pre-wrap' }}>{post.answer.content}</div>
               <div className="mt-3 text-muted">
                 {post.answer.author} · {post.answer.date}
               </div>
