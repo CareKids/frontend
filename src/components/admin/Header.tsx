@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useRecoilValue } from 'recoil';
-import { loginState, userRoleState } from '../atom';
 
 type MenuItem = {
     title: string;
@@ -9,8 +7,6 @@ type MenuItem = {
 
 function Header() {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
-    const isLoggedIn = useRecoilValue(loginState);
-    const userRole = useRecoilValue(userRoleState);
 
     const [isNavCollapsed, setIsNavCollapsed] = useState(true);
     const handleNavCollapse = () => {
@@ -27,51 +23,35 @@ function Header() {
 
     const menuItems: MenuItem[] = [
         {
-            title: '키즈존 찾기',
+            title: '장소',
             subMenuItems: [
-                { title: '키즈존 찾기', link: '/search' },
-            ],
-        },
-        {
-            title: '자료실',
-            subMenuItems: [
-                { title: '장소', link: '/place' },
-                { title: '주말 어린이집', link: '/class' },
-                { title: '긴급 진료기관', link: '/hospital' },
+                { title: '장소', link: '/admin/place' },
+                { title: '주말 어린이집', link: '/admin/class' },
+                { title: '긴급 진료기관', link: '/admin/hospital' },
             ],
         },
         {
             title: '육아 정보',
             subMenuItems: [
-                { title: '놀이 정보', link: '/play' },
-                { title: '정책', link: '/policy' },
+                { title: '놀이 정보', link: '/admin/play' },
+                { title: '정책', link: '/admin/policy' },
             ],
         },
         {
             title: '게시판',
             subMenuItems: [
-                { title: '공지사항', link: '/board' },
-                { title: '문의하기', link: '/qna' },
+                { title: '공지사항', link: '/admin/board' },
+                { title: '문의하기', link: '/admin/qna' },
             ],
         },
     ];
-
-    const getProfileLink = () => {
-        if (!isLoggedIn) return '/login';
-        return userRole === 'admin' ? '/admin' : '/mypage';
-    };
-
-    const getProfileText = () => {
-        if (!isLoggedIn) return '로그인';
-        return userRole === 'admin' ? '관리자 페이지' : '마이페이지';
-    };
 
     return (
         <>
         <nav className="navbar navbar-expand-lg navbar-light border-bottom">
             <div className="container">
                 {/* 로고 */}
-                <a className="navbar-brand" href="/">
+                <a className="navbar-brand" href="/admin">
                     <img className="logo" src={process.env.PUBLIC_URL + "/assets/logo.png"} alt="Logo" />
                 </a>
 
@@ -126,10 +106,10 @@ function Header() {
 
                 <div className="ml-auto d-none d-lg-block">
                     <a 
-                        href={getProfileLink()}
+                        href='/'
                         className="btn my-2 my-sm-0"
                     >
-                        <span>{getProfileText()}</span>
+                        <span>홈페이지</span>
                     </a>
                 </div>
             </div>
@@ -155,12 +135,13 @@ function Header() {
                             )}
                         </li>
                     ))}
+
                     <li className="nav-item">
                         <a
-                            href={getProfileLink()} 
+                            href='/'
                             className="my-2 my-sm-0 text-reset text-decoration-none"
                         >
-                            <span style={{ fontWeight: 'bold' }}>{getProfileText()}</span>
+                            <span style={{ fontWeight: 'bold' }}>홈페이지</span>
                         </a>
                     </li>
                 </ul>

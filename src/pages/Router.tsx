@@ -1,5 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// 관리자페이지
+import Admin from './admin/Admin'
+import AdminPlace from './admin/Place'
+import AdminQnA from './admin/QnA'
+
+// 일반 페이지
 import Signin from './Signin'
 import SigninExternal from './SigninExternal'
 import Login from './Login'
@@ -23,10 +29,33 @@ import QnADetail from './QnADetail'
 import QnAWrite from './QnAWrite';
 import Mypage from './Mypage'
 
+import Auth from '../hocs/Auth';
+const AuthenticatedAdminPage = Auth(Admin, 'admin');
+const AuthenticatedAdminPlacePage = Auth(AdminPlace, 'admin');
+const AuthenticatedAdminQnAPage = Auth(AdminQnA, 'admin');
+// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+
 const AppRouter = () => {
     return (
         <Router>
             <Routes>
+                {/* 관리자페이지 */}
+                <Route path="/admin" element={<AuthenticatedAdminPage />} />
+                <Route path="/admin/place" element={<AuthenticatedAdminPlacePage />} />
+                {/* <Route path="/admin/hospital" element={<AuthenticatedAdminPage />} /> */}
+                {/* <Route path="/admin/class" element={<AuthenticatedAdminPage />} /> */}
+                {/* <Route path="/admin/play" element={<AuthenticatedAdminPage />} /> */}
+                {/* <Route path="/admin/policy" element={<AuthenticatedAdminPage />} /> */}
+                {/* <Route path="/admin/board" element={<AuthenticatedAdminPage />} /> */}
+                <Route path="/admin/qna" element={<AuthenticatedAdminQnAPage />} />
+                {/* <Route path="/admin/user" element={<AuthenticatedAdminPage />} /> */}
+
+                {/* 일반페이지 */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/login/naver/auth" Component={NaverLoginCallback} />
                 <Route path="/password" element={<ChangePassword />} />

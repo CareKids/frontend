@@ -1,23 +1,34 @@
 import React, { useEffect } from 'react';
 
 const NaverButton: React.FC = () => {
-    const NAVER_CLIENT_ID = process.env.REACT_APP_NAVER_CLIENT_ID;
-    const REDIRECT_URI = process.env.REACT_APP_NAVER_CALLBACK_URL;
-    const NAVER_AUTH_URL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${REDIRECT_URI}`;
+    useEffect(() => {
+        const originalBabelPolyfill = (window as any)._babelPolyfill;
+        (window as any)._babelPolyfill = undefined;
 
-    const NaverLogin = () => {
-        window.location.href = NAVER_AUTH_URL;
-    };
+        const script = document.createElement('script');
+        script.src = 'https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js';
+        script.async = true;
+        document.body.appendChild(script);
+
+        script.onload = () => {
+            (window as any)._babelPolyfill = originalBabelPolyfill;
+
+            const naverLogin = new (window as any).naver.LoginWithNaverId({
+                clientId: process.env.REACT_APP_NAVER_CLIENT_ID,
+                callbackUrl: process.env.REACT_APP_NAVER_CALLBACK_URL,
+                isPopup: true,
+                loginButton: {color: "green", type: 1, height: 45}
+            });
+            naverLogin.init();
+        };
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
 
     return (
-        <a href="#" onClick={NaverLogin}>
-            <img 
-                src={process.env.PUBLIC_URL + "/assets/btn_naver.png"} 
-                alt="네이버 로그인" 
-                style={{ width: '45px', height: '45px' }}
-            />
-        </a>
-        // <div onClick={NaverLogin}>네이버 로그인</div>
+        <div id="naverIdLogin"></div>
     );
 };
 
