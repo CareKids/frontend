@@ -13,12 +13,6 @@ interface Post {
   type: string;
   content: string;
   date: string;  
-  attachments: Attachment[];
-}
-
-interface Attachment {
-    name: string;
-    url: string;
 }
 
 const PlayDetail: React.FC = () => {
@@ -30,11 +24,7 @@ const PlayDetail: React.FC = () => {
     title: '모르면 손해 보는 2024년 달라지는 육아정책 13가지',
     type: '강남구',
     content: '엄마아빠가 꼭 알아야 할 2024년 달라지는 육아 정책 13가지, 싹 다 모아봤어. 1. 다자녀 가구 지원 확대 출생 초기 양육비용 경감을 위한 첫만남이용권 바우처가 2024년 1월 1일부터 첫째아는 200만 원, 둘째아 이상 출생아는 300만 원으로 확대됐어. ',
-    date: '2024-06-25',
-    attachments: [
-        { name: '첨부파일1', url: 'sample.png'},
-        { name: '첨부파일2', url: 'sample.png'}
-    ]
+    date: '2024-06-25'
   }
 
   const handleGoBack = () => {
@@ -65,23 +55,6 @@ const PlayDetail: React.FC = () => {
             <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
             <div>{post.content}</div>
             <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
-
-            {post.attachments && post.attachments.length > 0 && (
-                <Card className="mt-4 mb-4">
-                    <CardBody>
-                    <h5 className="mb-3">첨부파일</h5>
-                    {post.attachments.map((attachment, index) => (
-                        <div key={index} className="d-flex justify-content-between align-items-center mb-2">
-                        <span>{attachment.name}</span>
-                        <Button size="sm" href={attachment.url} target="_blank" download>
-                            <FontAwesomeIcon icon={faDownload} className="me-2" />
-                            다운로드
-                        </Button>
-                        </div>
-                    ))}
-                    </CardBody>
-                </Card>
-            )}
 
             <div className="text-center mt-4">
             <Button color="primary" onClick={handleGoBack}>

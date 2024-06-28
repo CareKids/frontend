@@ -10,29 +10,26 @@ import Footer from '../../components/Footer'
 type Post = {
     id: number;
     placeName: string;
-    image: string;
-    category: string;
+    region: string;
     createdAt: string;
+    address: string;
+    phone: string;
+    openHour: string;
 };
 
-function Place() {
+function Class() {
     const [data, setData] = useState<Post[]>([
-        { id: 1, placeName: '케어키즈 카페', image: '/api/placeholder/50/50', category: '카페', createdAt: '2024-06-28' },
-        { id: 2, placeName: '케어키즈 음식점', image: '/api/placeholder/50/50', category: '음식점', createdAt: '2024-06-28' },
+        { id: 1, placeName: '어린이집1', region: '강남구', createdAt: '2024-06-28', address: '서울시 강남구', phone: '010-1234-5678', openHour: '09:00-18:00' },
+        { id: 2, placeName: '어린이집2', region: '관악구', createdAt: '2024-06-28', address: '서울시 관악구', phone: '010-1234-5678', openHour: '09:00-18:00' },
     ]);
     const [modal, setModal] = useState(false);
     const [editModal, setEditModal] = useState(false);
     const [currentPost, setCurrentPost] = useState<Post | null>(null);
     const [newPost, setNewPost] = useState<Partial<Post>>({});
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [fileError, setFileError] = useState<string | null>(null);
 
     const handleEdit = (post: Post) => {
         setCurrentPost(post);
         setEditModal(true);
-    };
-    const openImageInNewTab = (imageUrl: string) => {
-        window.open(imageUrl, '_blank');
     };
 
     const columnHelper = createColumnHelper<Post>();
@@ -45,19 +42,20 @@ function Place() {
             header: '장소 이름',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('image', {
-            header: '대표 이미지',
-            cell: info => (
-                <img 
-                    src={info.getValue()} 
-                    alt="대표 이미지" 
-                    style={{ width: '50px', height: '50px', cursor: 'pointer' }} 
-                    onClick={() => openImageInNewTab(info.getValue())}
-                />
-            ),
+        columnHelper.accessor('region', {
+            header: '지역',
+            cell: info => info.getValue(),
         }),
-        columnHelper.accessor('category', {
-            header: '카테고리',
+        columnHelper.accessor('address', {
+            header: '주소',
+            cell: info => info.getValue(),
+        }),
+        columnHelper.accessor('phone', {
+            header: '연락처',
+            cell: info => info.getValue(),
+        }),
+        columnHelper.accessor('openHour', {
+            header: '운영 시간',
             cell: info => info.getValue(),
         }),
         columnHelper.accessor('createdAt', {
@@ -86,30 +84,8 @@ function Place() {
         getCoreRowModel: getCoreRowModel(),
     });
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // 파일 타입 검증
-            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!validTypes.includes(file.type)) {
-                setFileError('올바른 이미지 파일을 선택해주세요 (JPG, PNG, GIF)');
-                setPreviewImage(null);
-                return;
-            }
-
-            setFileError(null);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviewImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
     const resetModal = () => {
         setNewPost({});
-        setPreviewImage(null);
-        setFileError(null);
         setCurrentPost(null);
     };
 
@@ -128,15 +104,15 @@ function Place() {
     };
 
     const handleSubmit = () => {
-        if (newPost.placeName && newPost.category) {
-            setData([...data, { ...newPost, id: data.length + 1, createdAt: new Date().toISOString().split('T')[0], image: previewImage || '/api/placeholder/50/50' } as Post]);
+        if (newPost.placeName && newPost.region) {
+            setData([...data, { ...newPost, id: data.length + 1, createdAt: new Date().toISOString().split('T')[0], } as Post]);
             toggle();
         }
     };
 
     const handleUpdate = () => {
         if (currentPost) {
-            setData(data.map(post => post.id === currentPost.id ? { ...currentPost, ...newPost, image: previewImage || currentPost.image } : post));
+            setData(data.map(post => post.id === currentPost.id ? { ...currentPost, ...newPost, } : post));
             toggleEdit();
         }
     };
@@ -145,7 +121,7 @@ function Place() {
         <div className="App">
             <Header />
             <div className="container mt-4">
-                <h1 className="mb-4"><b>장소 관리</b></h1>
+                <h1 className="mb-4"><b>주말 어린이집 관리</b></h1>
 
                 <div className="text-right mb-4">
                     <Button color="primary" onClick={toggle}>게시글 등록</Button>
@@ -197,50 +173,54 @@ function Place() {
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label for="category">카테고리</Label>
+                            <Label for="region">지역구</Label>
                             <Input 
                                 type="select" 
-                                name="category" 
-                                id="category" 
-                                value={newPost.category || ''}
-                                onChange={(e) => setNewPost({...newPost, category: e.target.value})}
+                                name="region" 
+                                id="region" 
+                                value={newPost.region || ''}
+                                onChange={(e) => setNewPost({...newPost, region: e.target.value})}
                             >
                                 <option value="">선택하세요</option>
-                                <option>카페</option>
-                                <option>음식점</option>
-                                <option>놀이터</option>
+                                <option>강남구</option>
+                                <option>강서구</option>
+                                <option>관악구</option>
                             </Input>
                         </FormGroup>
                         <FormGroup>
-                            <Label for="image">대표 이미지</Label>
+                            <Label for="address">주소</Label>
                             <Input 
-                                type="file" 
-                                name="image" 
-                                id="image" 
-                                onChange={handleImageChange}
-                                accept="image/jpeg, image/png, image/gif"
+                                type="text" 
+                                name="address" 
+                                id="address" 
+                                value={newPost.address || ''}
+                                onChange={(e) => setNewPost({...newPost, address: e.target.value})} 
                             />
-                            {fileError && <Alert color="danger">{fileError}</Alert>}
-                            {previewImage ? (
-                                <img 
-                                    src={previewImage} 
-                                    alt="Preview" 
-                                    style={{ width: '100px', marginTop: '10px', cursor: 'pointer' }} 
-                                    onClick={() => openImageInNewTab(previewImage)}
-                                />
-                            ) : currentPost?.image && (
-                                <img 
-                                    src={currentPost.image} 
-                                    alt="Current" 
-                                    style={{ width: '100px', marginTop: '10px', cursor: 'pointer' }} 
-                                    onClick={() => openImageInNewTab(currentPost.image)}
-                                />
-                            )}
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="phone">연락처</Label>
+                            <Input 
+                                type="text" 
+                                name="phone" 
+                                id="phone" 
+                                value={newPost.phone || ''}
+                                onChange={(e) => setNewPost({...newPost, phone: e.target.value})} 
+                            />
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="openHour">운영시간</Label>
+                            <Input 
+                                type="text" 
+                                name="openHour" 
+                                id="openHour" 
+                                value={newPost.openHour || ''}
+                                onChange={(e) => setNewPost({...newPost, openHour: e.target.value})} 
+                            />
                         </FormGroup>
                     </Form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleSubmit} disabled={!!fileError || !newPost.placeName || !newPost.category}>등록</Button>{' '}
+                    <Button color="primary" onClick={handleSubmit} disabled={ !newPost.placeName || !newPost.region || !newPost.address || !newPost.phone|| !newPost.openHour }>등록</Button>{' '}
                     <Button color="secondary" onClick={toggle}>취소</Button>
                 </ModalFooter>
             </Modal>
@@ -261,39 +241,54 @@ function Place() {
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label for="category">카테고리</Label>
+                            <Label for="region">지역구</Label>
                             <Input 
                                 type="select" 
-                                name="category" 
-                                id="category" 
-                                value={newPost.category || currentPost?.category || ''}
-                                onChange={(e) => setNewPost({...newPost, category: e.target.value})}
+                                name="region" 
+                                id="region" 
+                                value={newPost.region || currentPost?.region || ''}
+                                onChange={(e) => setNewPost({...newPost, region: e.target.value})}
                             >
                                 <option value="">선택하세요</option>
-                                <option>카페</option>
-                                <option>음식점</option>
-                                <option>놀이터</option>
+                                <option>강남구</option>
+                                <option>강서구</option>
+                                <option>관악구</option>
                             </Input>
                         </FormGroup>
                         <FormGroup>
-                            <Label for="image">대표 이미지</Label>
+                            <Label for="address">주소</Label>
                             <Input 
-                                type="file" 
-                                name="image" 
-                                id="image" 
-                                onChange={handleImageChange}
-                                accept="image/jpeg, image/png, image/gif"
+                                type="text" 
+                                name="address" 
+                                id="address" 
+                                value={newPost.address || currentPost?.address || ''}
+                                onChange={(e) => setNewPost({...newPost, address: e.target.value})} 
                             />
-                            {fileError && <Alert color="danger">{fileError}</Alert>}
-                            {previewImage ? 
-                                <img src={previewImage} alt="Preview" style={{ width: '100px', marginTop: '10px' }} /> :
-                                currentPost?.image && <img src={currentPost.image} alt="Current" style={{ width: '100px', marginTop: '10px' }} />
-                            }
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="phone">연락처</Label>
+                            <Input 
+                                type="text" 
+                                name="phone" 
+                                id="phone" 
+                                value={newPost.phone || currentPost?.phone || ''}
+                                onChange={(e) => setNewPost({...newPost, phone: e.target.value})} 
+                            />
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="openHour">운영시간</Label>
+                            <Input 
+                                type="text" 
+                                name="openHour" 
+                                id="openHour" 
+                                value={newPost.openHour || currentPost?.openHour || ''}
+                                onChange={(e) => setNewPost({...newPost, openHour: e.target.value})} 
+                            />
                         </FormGroup>
                     </Form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleUpdate} disabled={!!fileError}>수정</Button>{' '}
+                    <Button color="primary" onClick={handleUpdate}>수정</Button>{' '}
                     <Button color="secondary" onClick={toggleEdit}>취소</Button>
                 </ModalFooter>
             </Modal>
@@ -303,4 +298,4 @@ function Place() {
     );
 }
 
-export default Place;
+export default Class;

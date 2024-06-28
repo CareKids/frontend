@@ -9,16 +9,16 @@ import Footer from '../../components/Footer'
 
 type Post = {
     id: number;
-    placeName: string;
+    title: string;
     image: string;
-    category: string;
+    description: string;
     createdAt: string;
 };
 
 function Place() {
     const [data, setData] = useState<Post[]>([
-        { id: 1, placeName: '케어키즈 카페', image: '/api/placeholder/50/50', category: '카페', createdAt: '2024-06-28' },
-        { id: 2, placeName: '케어키즈 음식점', image: '/api/placeholder/50/50', category: '음식점', createdAt: '2024-06-28' },
+        { id: 1, title: '공지사항1', image: '/api/placeholder/50/50', description: '공지사항\n입니다.', createdAt: '2024-06-28' },
+        { id: 2, title: '공지사항2', image: '/api/placeholder/50/50', description: '공지사항\n입니다.', createdAt: '2024-06-28' },
     ]);
     const [modal, setModal] = useState(false);
     const [editModal, setEditModal] = useState(false);
@@ -41,24 +41,20 @@ function Place() {
             header: '번호',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('placeName', {
-            header: '장소 이름',
+        columnHelper.accessor('title', {
+            header: '제목',
             cell: info => info.getValue(),
         }),
         columnHelper.accessor('image', {
-            header: '대표 이미지',
+            header: '첨부 이미지',
             cell: info => (
                 <img 
                     src={info.getValue()} 
-                    alt="대표 이미지" 
+                    alt="이미지" 
                     style={{ width: '50px', height: '50px', cursor: 'pointer' }} 
                     onClick={() => openImageInNewTab(info.getValue())}
                 />
             ),
-        }),
-        columnHelper.accessor('category', {
-            header: '카테고리',
-            cell: info => info.getValue(),
         }),
         columnHelper.accessor('createdAt', {
             header: '등록 일자',
@@ -128,7 +124,7 @@ function Place() {
     };
 
     const handleSubmit = () => {
-        if (newPost.placeName && newPost.category) {
+        if (newPost.title ) {
             setData([...data, { ...newPost, id: data.length + 1, createdAt: new Date().toISOString().split('T')[0], image: previewImage || '/api/placeholder/50/50' } as Post]);
             toggle();
         }
@@ -145,7 +141,7 @@ function Place() {
         <div className="App">
             <Header />
             <div className="container mt-4">
-                <h1 className="mb-4"><b>장소 관리</b></h1>
+                <h1 className="mb-4"><b>공지사항 관리</b></h1>
 
                 <div className="text-right mb-4">
                     <Button color="primary" onClick={toggle}>게시글 등록</Button>
@@ -187,32 +183,17 @@ function Place() {
                 <ModalBody>
                     <Form>
                         <FormGroup>
-                            <Label for="placeName">장소 이름</Label>
+                            <Label for="title">제목</Label>
                             <Input 
                                 type="text" 
-                                name="placeName" 
-                                id="placeName" 
-                                value={newPost.placeName || ''}
-                                onChange={(e) => setNewPost({...newPost, placeName: e.target.value})} 
+                                name="title" 
+                                id="title" 
+                                value={newPost.title || ''}
+                                onChange={(e) => setNewPost({...newPost, title: e.target.value})} 
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label for="category">카테고리</Label>
-                            <Input 
-                                type="select" 
-                                name="category" 
-                                id="category" 
-                                value={newPost.category || ''}
-                                onChange={(e) => setNewPost({...newPost, category: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>카페</option>
-                                <option>음식점</option>
-                                <option>놀이터</option>
-                            </Input>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="image">대표 이미지</Label>
+                            <Label for="image">첨부 이미지</Label>
                             <Input 
                                 type="file" 
                                 name="image" 
@@ -237,10 +218,22 @@ function Place() {
                                 />
                             )}
                         </FormGroup>
+                        <FormGroup>
+                            <Label for="description"></Label>
+                            <Input 
+                                type="textarea" 
+                                name="description" 
+                                id="description" 
+                                value={newPost.description || ''}
+                                onChange={(e) => setNewPost({...newPost, description: e.target.value})}
+                                style={{ height: '300px', resize: 'none'  }}
+                            >
+                            </Input>
+                        </FormGroup>
                     </Form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleSubmit} disabled={!!fileError || !newPost.placeName || !newPost.category}>등록</Button>{' '}
+                    <Button color="primary" onClick={handleSubmit} disabled={!!fileError || !newPost.title || !newPost.description}>등록</Button>{' '}
                     <Button color="secondary" onClick={toggle}>취소</Button>
                 </ModalFooter>
             </Modal>
@@ -251,32 +244,17 @@ function Place() {
                 <ModalBody>
                     <Form>
                         <FormGroup>
-                            <Label for="placeName">장소 이름</Label>
+                            <Label for="title">제목</Label>
                             <Input 
                                 type="text" 
-                                name="placeName" 
-                                id="placeName" 
-                                value={newPost.placeName || currentPost?.placeName || ''}
-                                onChange={(e) => setNewPost({...newPost, placeName: e.target.value})} 
+                                name="title" 
+                                id="title" 
+                                value={newPost.title || currentPost?.title || ''}
+                                onChange={(e) => setNewPost({...newPost, title: e.target.value})} 
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label for="category">카테고리</Label>
-                            <Input 
-                                type="select" 
-                                name="category" 
-                                id="category" 
-                                value={newPost.category || currentPost?.category || ''}
-                                onChange={(e) => setNewPost({...newPost, category: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>카페</option>
-                                <option>음식점</option>
-                                <option>놀이터</option>
-                            </Input>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="image">대표 이미지</Label>
+                            <Label for="image">첨부 이미지</Label>
                             <Input 
                                 type="file" 
                                 name="image" 
@@ -289,6 +267,18 @@ function Place() {
                                 <img src={previewImage} alt="Preview" style={{ width: '100px', marginTop: '10px' }} /> :
                                 currentPost?.image && <img src={currentPost.image} alt="Current" style={{ width: '100px', marginTop: '10px' }} />
                             }
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="description"></Label>
+                            <Input 
+                                type="textarea" 
+                                name="description" 
+                                id="description" 
+                                value={newPost.description || currentPost?.description || ''}
+                                onChange={(e) => setNewPost({...newPost, description: e.target.value})}
+                                style={{ height: '300px', resize: 'none'  }}
+                            >
+                            </Input>
                         </FormGroup>
                     </Form>
                 </ModalBody>

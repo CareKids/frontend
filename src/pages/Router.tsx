@@ -4,6 +4,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Admin from './admin/Admin'
 import AdminPlace from './admin/Place'
 import AdminQnA from './admin/QnA'
+import AdminClass from './admin/Class'
+import AdminHospital from './admin/Hospital'
+import AdminPlay from './admin/Play'
+import AdminBoard from './admin/Board'
 
 // 일반 페이지
 import Signin from './Signin'
@@ -34,11 +38,10 @@ import Auth from '../hocs/Auth';
 const AuthenticatedAdminPage = Auth(Admin, 'admin');
 const AuthenticatedAdminPlacePage = Auth(AdminPlace, 'admin');
 const AuthenticatedAdminQnAPage = Auth(AdminQnA, 'admin');
-// const AuthenticatedAdminPage = Auth(Admin, 'admin');
-// const AuthenticatedAdminPage = Auth(Admin, 'admin');
-// const AuthenticatedAdminPage = Auth(Admin, 'admin');
-// const AuthenticatedAdminPage = Auth(Admin, 'admin');
-// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+const AuthenticatedAdminClassPage = Auth(AdminClass, 'admin');
+const AuthenticatedAdminHospitalPage = Auth(AdminHospital, 'admin');
+const AuthenticatedAdminPlayPage = Auth(AdminPlay, 'admin');
+const AuthenticatedAdminBoardPage = Auth(AdminBoard, 'admin');
 // const AuthenticatedAdminPage = Auth(Admin, 'admin');
 
 const AppRouter = () => {
@@ -48,13 +51,12 @@ const AppRouter = () => {
                 {/* 관리자페이지 */}
                 <Route path="/admin" element={<AuthenticatedAdminPage />} />
                 <Route path="/admin/place" element={<AuthenticatedAdminPlacePage />} />
-                {/* <Route path="/admin/hospital" element={<AuthenticatedAdminPage />} /> */}
-                {/* <Route path="/admin/class" element={<AuthenticatedAdminPage />} /> */}
-                {/* <Route path="/admin/play" element={<AuthenticatedAdminPage />} /> */}
+                <Route path="/admin/hospital" element={<AuthenticatedAdminHospitalPage />} />
+                <Route path="/admin/class" element={<AuthenticatedAdminClassPage />} />
+                <Route path="/admin/play" element={<AuthenticatedAdminPlayPage />} />
                 {/* <Route path="/admin/policy" element={<AuthenticatedAdminPage />} /> */}
-                {/* <Route path="/admin/board" element={<AuthenticatedAdminPage />} /> */}
+                <Route path="/admin/board" element={<AuthenticatedAdminBoardPage />} />
                 <Route path="/admin/qna" element={<AuthenticatedAdminQnAPage />} />
-                {/* <Route path="/admin/user" element={<AuthenticatedAdminPage />} /> */}
 
                 {/* 일반페이지 */}
                 <Route path="/login" element={<Login />} />

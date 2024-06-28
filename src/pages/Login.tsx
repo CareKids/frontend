@@ -39,7 +39,7 @@ const Login = () => {
                             <hr className="border-1"/>
                             <div className='mb-3'>간편 로그인</div>
 
-                            <div className="text-center mb-3">
+                            <div className="d-flex justify-content-center align-items-center mb-3">
                                 <GoogleButton />
                                 <NaverButton />
                             </div>
