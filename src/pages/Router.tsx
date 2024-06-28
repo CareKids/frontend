@@ -28,6 +28,7 @@ import QnA from './QnA'
 import QnADetail from './QnADetail'
 import QnAWrite from './QnAWrite';
 import Mypage from './Mypage'
+import NotFound from './NotFound';
 
 import Auth from '../hocs/Auth';
 const AuthenticatedAdminPage = Auth(Admin, 'admin');
@@ -78,6 +79,7 @@ const AppRouter = () => {
                 <Route path="/qna/:id" element={<QnADetail />} />
                 <Route path="/qna/write" element={<QnAWrite />} />
                 <Route path="/mypage" element={<Mypage />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </Router>
     );
