@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Form, FormGroup, Label, Input, Button, ListGroup, ListGroupItem } from 'reactstrap';
-import { Editor } from '@tinymce/tinymce-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 
@@ -10,15 +9,14 @@ import Footer from '../components/Footer';
 
 const QnAWrite: React.FC = () => {
   const navigate = useNavigate();
-  const editorRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const content = editorRef.current.getContent();
     // TODO: API 호출
     console.log('제목:', title);
     console.log('내용:', content);
@@ -63,64 +61,60 @@ const QnAWrite: React.FC = () => {
             </Label>
           </FormGroup>
           <FormGroup>
-            <Label>내용</Label>
-            <Editor
-              apiKey={process.env.REACT_APP_TINY_API_KEY}
-              onInit={(evt, editor) => editorRef.current = editor}
-              init={{
-                height: 500,
-                menubar: false,
-                statusbar: false,
-                plugins: [
-                  ''
-                ],
-                toolbar: 'undo redo | formatselect | ',
-                content_style: 'body { font-family: Pretendard, Helvetica, Arial, sans-serif; font-size:14px }'
-              }}
+            <Label for="content">내용</Label>
+            <Input
+              type="textarea"
+              name="content"
+              id="content"
+              placeholder="내용을 입력하세요"
+              className='mb-2 p-2'
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              style={{ height: '300px' }}
+              required
             />
-            </FormGroup>
-            <FormGroup>
-                <Label for="file-attachment">첨부파일</Label>
-                <div>
-                <Input
-                    type="file"
-                    id="file-attachment"
-                    multiple
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                    innerRef={fileInputRef}
-                />
-                <Button 
-                    color="light" 
-                    className="mt-2 d-flex align-items-center" 
-                    style={{ border: '1px solid #ced4da' }}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <FontAwesomeIcon icon={faPlus} className="me-2" />
-                    파일 선택
-                </Button>
-                </div>
-                <ListGroup className="mt-2">
-                {attachments.map((file, index) => (
-                    <ListGroupItem key={index} className="d-flex justify-content-between align-items-center">
-                    {file.name}
-                    <Button color="danger" size="sm" onClick={() => handleRemoveFile(index)}>
-                        <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                    </ListGroupItem>
-                ))}
-                </ListGroup>
-            </FormGroup>
-            <div className="text-center mt-4">
-                <Button type="submit" color="primary" className="me-2">
-                제출
-                </Button>
-                <Button type="button" color="secondary" onClick={() => navigate('/qna')}>
-                취소
-                </Button>
+          </FormGroup>
+          <FormGroup>
+            <Label for="file-attachment">첨부파일</Label>
+            <div>
+              <Input
+                type="file"
+                id="file-attachment"
+                multiple
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+                innerRef={fileInputRef}
+              />
+              <Button 
+                color="light" 
+                className="mt-2 d-flex align-items-center" 
+                style={{ border: '1px solid #ced4da' }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FontAwesomeIcon icon={faPlus} className="me-2" />
+                파일 선택
+              </Button>
             </div>
+            <ListGroup className="mt-2">
+              {attachments.map((file, index) => (
+                <ListGroupItem key={index} className="d-flex justify-content-between align-items-center">
+                  {file.name}
+                  <Button color="danger" size="sm" onClick={() => handleRemoveFile(index)}>
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Button>
+                </ListGroupItem>
+              ))}
+            </ListGroup>
+          </FormGroup>
+          <div className="text-center mt-4">
+            <Button type="submit" color="primary" className="me-2">
+              제출
+            </Button>
+            <Button type="button" color="secondary" onClick={() => navigate('/qna')}>
+              취소
+            </Button>
+          </div>
         </Form>
-        
       </Container>
       <Footer />
     </div>
