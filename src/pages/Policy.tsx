@@ -8,7 +8,7 @@ import { faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-interface Policy {
+interface Policies {
   id: number;
   title: string;
   type: string;
@@ -23,7 +23,7 @@ const Policy: React.FC = () => {
     };
     
     // 임시 데이터
-    const policies: Policy[] = [
+    const policies: Policies[] = [
         {
             id: 1,
             title: '모르면 손해 보는 2024년 달라지는 육아...',
@@ -68,9 +68,15 @@ const Policy: React.FC = () => {
           <div className="bg-light p-3 mb-4 rounded">
             <Row>
               <Col md={6}>
-                <Input type="select">
+                <Input type="select" className="mb-2">
                   <option>지역</option>
                   {/* TODO: 지역 목록 불러오기 */}
+                </Input>
+              </Col>
+              <Col md={6}>
+                <Input type="select">
+                  <option>연령대</option>
+                  {/* TODO: 연령대 목록 불러오기 */}
                 </Input>
               </Col>
             </Row>
