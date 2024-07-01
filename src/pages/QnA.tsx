@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faPencilAlt, faLock } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -13,6 +13,7 @@ interface Post {
   author: string;
   date: string;
   progress: string;
+  isSecret: boolean;
 }
 
 const QnA: React.FC = () => {
@@ -26,6 +27,7 @@ const QnA: React.FC = () => {
     author: '케어키즈',
     date: '2024-06-24',
     progress: '처리완료',
+    isSecret: Math.random() < 0.3,
   }));
 
   const filteredPosts = dummyPosts.filter((post) =>
@@ -39,8 +41,18 @@ const QnA: React.FC = () => {
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
   
   const navigate = useNavigate();
-  const handleRowClick = (postId: number) => {
-    navigate(`/qna/${postId}`);
+  const handleRowClick = (post: Post) => {
+    if (post.isSecret) {
+      // TODO: 작성자 검증 API
+      const isAuthor = window.confirm("작성자 본인입니까?");
+      if (isAuthor) {
+        navigate(`/qna/${post.id}`);
+      } else {
+        alert("비밀글은 작성자만 볼 수 있습니다.");
+      }
+    } else {
+      navigate(`/qna/${post.id}`);
+    }
   };
 
   const handleWrite = () => {
@@ -85,9 +97,14 @@ const QnA: React.FC = () => {
                     </thead>
                     <tbody>
                     {currentPosts.map((post) => (
-                        <tr key={post.id} onClick={() => handleRowClick(post.id)} style={{ cursor: 'pointer' }}>
+                        <tr key={post.id} onClick={() => handleRowClick(post)} style={{ cursor: 'pointer' }}>
                             <td className="text-center">{post.id}</td>
-                            <td>{post.title}</td>
+                            <td>
+                                {post.title}
+                                {post.isSecret && (
+                                    <FontAwesomeIcon icon={faLock} className="ms-2 text-muted" />
+                                )}
+                            </td>
                             <td className="text-center">{post.progress}</td>
                             <td className="text-center">{post.author}</td>
                             <td className="text-center">{post.date}</td>
