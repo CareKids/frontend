@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Form, FormGroup, Input, Card, CardBody, Container, Row, Col } from 'reactstrap';
+import { Button, Form, FormGroup, Input, Card, CardBody, Container, Row, Col, Alert } from 'reactstrap';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+
+import { sendVerificationEmail, verifyEmailCode } from '../api/login'
 
 const Signin = () => {
     const navigate = useNavigate();
@@ -13,9 +15,12 @@ const Signin = () => {
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [showVerification, setShowVerification] = useState(false);
     const [verificationCode, setVerificationCode] = useState('');
-    const [timer, setTimer] = useState(180); // 3 minutes
+    const [verificationError, setVerificationError] = useState<string | null>(null);
+    const [timer, setTimer] = useState(180); // 3분
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
     const [nickname, setNickname] = useState('');
     const [isNicknameAvailable, setIsNicknameAvailable] = useState<boolean | null>(null);
     const [childrenAges, setChildrenAges] = useState(['']);
@@ -32,15 +37,61 @@ const Signin = () => {
         };
     }, [showVerification, timer]);
 
-    const handleEmailVerification = () => {
-        setShowVerification(true);
-        setTimer(180);
+
+    const handleSendVerification = async () => {
+        try {
+            await sendVerificationEmail(email.id, email.domain);
+            setShowVerification(true);
+            setTimer(180);
+            setVerificationError(null);
+            alert('인증번호가 발송되었습니다. 이메일을 확인해주세요.');
+        } catch (error) {
+            setVerificationError('인증 이메일 발송에 실패했습니다. 다시 시도해주세요.');
+            alert('인증 이메일 발송에 실패했습니다. 다시 시도해주세요.');
+        }
     };
 
-    const handleVerificationComplete = () => {
-        // TODO: 이메일 인증 추가
-        setIsEmailVerified(true);
-        setShowVerification(false);
+    const handleVerificationComplete = async () => {
+        try {
+            const isVerified = await verifyEmailCode(email.id, email.domain, verificationCode);
+            if (isVerified) {
+                setIsEmailVerified(true);
+                setShowVerification(false);
+                setVerificationError(null);
+                alert('이메일 인증이 완료되었습니다.');
+            } else {
+                setVerificationError('잘못된 인증번호입니다. 다시 시도해주세요.');
+                alert('잘못된 인증번호입니다. 다시 시도해주세요.');
+            }
+        } catch (error) {
+            setVerificationError('이메일 인증에 실패했습니다. 다시 시도해주세요.');
+            alert('이메일 인증에 실패했습니다. 다시 시도해주세요.');
+        }
+    };
+
+    const validatePassword = (value: string) => {
+        if (value.length < 10 || value.length > 20) {
+            setPasswordError('비밀번호는 10 ~ 20자여야 합니다.');
+            return false;
+        }
+        setPasswordError(null);
+        return true;
+    };
+
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newPassword = e.target.value;
+        setPassword(newPassword);
+        validatePassword(newPassword);
+    };
+
+    const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newConfirmPassword = e.target.value;
+        setConfirmPassword(newConfirmPassword);
+        if (newConfirmPassword !== password && newConfirmPassword !== '') {
+            setConfirmPasswordError('비밀번호가 일치하지 않습니다.');
+        } else {
+            setConfirmPasswordError(null);
+        }
     };
 
     const handleNicknameCheck = () => {
@@ -66,108 +117,120 @@ const Signin = () => {
                     <CardBody>
                         <h2 className="text-center mt-4 mb-5">회원가입</h2>
                         <Form onSubmit={handleSubmit}>
-                        <FormGroup className="mb-3">
-                            <label>이메일</label>
-                            <Row className="mt-1 g-2">
-                            <Col xs="4">
-                                <Input
-                                type="text"
-                                value={email.id}
-                                onChange={(e) => setEmail({ ...email, id: e.target.value })}
-                                disabled={isEmailVerified}
-                                />
-                            </Col>
-                            <Col xs="1" className="text-center p-2">@</Col>
-                            <Col xs="4">
-                                <Input
-                                type="select"
-                                value={email.domain}
-                                onChange={(e) => setEmail({ ...email, domain: e.target.value })}
-                                disabled={isEmailVerified}
-                                >
-                                <option value="">선택</option>
-                                <option value="naver.com">naver.com</option>
-                                <option value="gmail.com">gmail.com</option>
-                                <option value="custom">직접입력</option>
-                                </Input>
-                            </Col>
-                            {email.domain === 'custom' && (
-                                <Col xs="3">
-                                <Input
-                                    type="text"
-                                    value={customDomain}
-                                    onChange={(e) => setCustomDomain(e.target.value)}
-                                    disabled={isEmailVerified}
-                                />
-                                </Col>
-                            )}
-                            </Row>
-                        </FormGroup>
-
-                        <div className="text-center mb-4">
-                            <Button
-                            color="primary"
-                            className="p-2"
-                            style={{ minWidth: '100%' }}
-                            onClick={handleEmailVerification}
-                            disabled={isEmailVerified}
-                            >
-                            이메일 인증
-                            </Button>
-                        </div>
-
-                        {showVerification && (
-                            <>
                             <FormGroup className="mb-3">
-                                <label>인증번호</label>
-                                <Input
-                                type="text"
-                                className="mt-1 pt-2 pb-2"
-                                value={verificationCode}
-                                onChange={(e) => setVerificationCode(e.target.value)}
-                                />
-                                <small className="text-muted">
-                                남은 시간: {Math.floor(timer / 60)}:{timer % 60 < 10 ? '0' : ''}{timer % 60}
-                                </small>
+                                <label>이메일</label>
+                                <Row className="mt-1 g-2">
+                                    <Col xs="4">
+                                        <Input
+                                            type="text"
+                                            value={email.id}
+                                            onChange={(e) => setEmail({ ...email, id: e.target.value })}
+                                            disabled={isEmailVerified}
+                                        />
+                                    </Col>
+                                    <Col xs="1" className="text-center p-2">@</Col>
+                                    <Col xs="4">
+                                        <Input
+                                            type="select"
+                                            value={email.domain}
+                                            onChange={(e) => setEmail({ ...email, domain: e.target.value })}
+                                            disabled={isEmailVerified}
+                                        >
+                                            <option value="">선택</option>
+                                            <option value="naver.com">naver.com</option>
+                                            <option value="hanmail.net">hanmail.net</option>
+                                            <option value="daum.net">daum.net</option>
+                                            <option value="nate.com">nate.com</option>
+                                            <option value="gmail.com">gmail.com</option>
+                                            <option value="hotmail.com">hotmail.com</option>
+                                            <option value="lycos.co.kr">lycos.co.kr</option>
+                                            <option value="empal.com">empal.com</option>
+                                            <option value="cyworld.com">cyworld.com</option>
+                                            <option value="yahoo.com">yahoo.com</option>
+                                            <option value="paran.com">paran.com</option>
+                                            <option value="dreamwiz.com">dreamwiz.com</option>
+                                            <option value="custom">직접입력</option>
+                                        </Input>
+                                    </Col>
+                                    {email.domain === 'custom' && (
+                                        <Col xs="3">
+                                            <Input
+                                                type="text"
+                                                value={customDomain}
+                                                onChange={(e) => setCustomDomain(e.target.value)}
+                                                disabled={isEmailVerified}
+                                            />
+                                        </Col>
+                                    )}
+                                </Row>
                             </FormGroup>
+
                             <div className="text-center mb-4">
                                 <Button
-                                color="primary"
-                                className="p-2"
-                                style={{ minWidth: '100%' }}
-                                onClick={handleVerificationComplete}
+                                    color="primary"
+                                    className="p-2"
+                                    style={{ minWidth: '100%' }}
+                                    onClick={handleSendVerification}
+                                    disabled={isEmailVerified}
                                 >
-                                인증 완료
+                                    이메일 인증
                                 </Button>
                             </div>
-                            </>
-                        )}
+
+                            {showVerification && !isEmailVerified && (
+                                <>
+                                    <FormGroup className="mb-3">
+                                        <label>인증번호</label>
+                                        <Input
+                                            type="text"
+                                            className="mt-1 pt-2 pb-2"
+                                            value={verificationCode}
+                                            onChange={(e) => setVerificationCode(e.target.value)}
+                                        />
+                                        <small className="text-muted">
+                                            남은 시간: {Math.floor(timer / 60)}:{timer % 60 < 10 ? '0' : ''}{timer % 60}
+                                        </small>
+                                    </FormGroup>
+                                    <div className="text-center mb-4">
+                                        <Button
+                                            color="primary"
+                                            className="p-2"
+                                            style={{ minWidth: '100%' }}
+                                            onClick={handleVerificationComplete}
+                                        >
+                                            인증 완료
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
 
                         <FormGroup>
                             <label>비밀번호</label>
                             <Input
-                            type="password"
-                            className="mt-1 pt-2 pb-2"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                                type="password"
+                                className="mt-1 pt-2 pb-2"
+                                value={password}
+                                onChange={handlePasswordChange}
                             />
-                            <div className="text-muted small mt-1">
-                            비밀번호는 10자 이상이어야 하며, 특수 문자를 포함하고 있어야 합니다.
-                            </div>
+                            {passwordError && (
+                                <div className="text-danger small mt-1">
+                                    {passwordError}
+                                </div>
+                            )}
                         </FormGroup>
 
                         <FormGroup className="mb-4">
                             <label>비밀번호 확인</label>
                             <Input
-                            type="password"
-                            className="mt-1 pt-2 pb-2"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                type="password"
+                                className="mt-1 pt-2 pb-2"
+                                value={confirmPassword}
+                                onChange={handleConfirmPasswordChange}
                             />
-                            {password !== confirmPassword && confirmPassword !== '' && (
-                            <div className="text-danger small mt-1">
-                                비밀번호가 일치하지 않습니다.
-                            </div>
+                            {confirmPasswordError && (
+                                <div className="text-danger small mt-1">
+                                    {confirmPasswordError}
+                                </div>
                             )}
                         </FormGroup>
 

@@ -1,12 +1,8 @@
 import React, { useEffect } from 'react';
 
 const GoogleButton: React.FC = () => {
-    const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-    const REDIRECT_URI = process.env.REACT_APP_NAVER_CALLBACK_URL;
-    const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=email`;
-
     const GoogleLogin = () => {
-        window.location.href = GOOGLE_AUTH_URL;
+        window.location.href = "http://localhost:8080/oauth2/authorization/google";
     };
 
     return (
