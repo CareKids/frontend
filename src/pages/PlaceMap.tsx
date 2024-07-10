@@ -29,6 +29,7 @@ const PlaceMap: React.FC = () => {
 
     useEffect(() => {
         const script = document.createElement('script');
+        script.type = 'text/javascript';
         script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${process.env.REACT_APP_API_ID}`;
         script.async = true;
         document.body.appendChild(script);
