@@ -6,7 +6,9 @@ import { Button, Form, FormGroup, Input, Card, CardBody, Container, Row, Col, Al
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-import { sendVerificationEmail, verifyEmailCode } from '../api/login'
+import { sendVerificationEmail, verifyEmailCode, checkNicknameAvailability, signUp } from '../api/login'
+import { getRegions, getAgeTags } from '../api/load';
+import { Region, AgeTag, SignUpData } from '../api/types';
 
 const Signin = () => {
     const navigate = useNavigate();
@@ -22,18 +24,36 @@ const Signin = () => {
     const [passwordError, setPasswordError] = useState<string | null>(null);
     const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
     const [nickname, setNickname] = useState('');
-    const [isNicknameAvailable, setIsNicknameAvailable] = useState<boolean | null>(null);
-    const [childrenAges, setChildrenAges] = useState(['']);
+    const [isNicknameAvailable, setIsNicknameAvailable] = useState<boolean | null>(null);    
+    const [regions, setRegions] = useState<Region[]>([]);
+    const [ageTags, setAgeTags] = useState<AgeTag[]>([]);
+    const [selectedRegion, setSelectedRegion] = useState('');
+    const [childrenAges, setChildrenAges] = useState(['']);    
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [regionsData, ageTagsData] = await Promise.all([getRegions(), getAgeTags()]);
+                setRegions(regionsData);
+                setAgeTags(ageTagsData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('데이터를 불러오는 데 실패했습니다. 페이지를 새로고침 해주세요.');
+            }
+        };
+
+        fetchData();
+    }, []);
 
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         if (showVerification && timer > 0) {
-        interval = setInterval(() => {
-            setTimer((prevTimer) => prevTimer - 1);
-        }, 1000);
+            interval = setInterval(() => {
+                setTimer((prevTimer) => prevTimer - 1);
+            }, 1000);
         }
         return () => {
-        if (interval) clearInterval(interval);
+            if (interval) clearInterval(interval);
         };
     }, [showVerification, timer]);
 
@@ -94,19 +114,64 @@ const Signin = () => {
         }
     };
 
-    const handleNicknameCheck = () => {
-        // TODO: 닉네임 중복 확인 추가
-        setIsNicknameAvailable(Math.random() < 0.5);
+    const handleNicknameCheck = async () => {
+        try {
+            const isAvailable = await checkNicknameAvailability(nickname);
+            setIsNicknameAvailable(isAvailable);
+            if (isAvailable) {
+                alert('사용 가능한 닉네임입니다.');
+            } else {
+                alert('이미 사용 중인 닉네임입니다. 다른 닉네임을 선택해주세요.');
+            }
+        } catch (error) {
+            console.error('Error checking nickname:', error);
+            setIsNicknameAvailable(false);
+            alert('닉네임 중복 확인 중 오류가 발생했습니다.');
+        }
     };
 
     const handleAddChildAge = () => {
         setChildrenAges([...childrenAges, '']);
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // TODO: 회원가입 추가
-        navigate(-1);
+        if (isEmailVerified !== true) {
+            alert('이메일 인증을 해주세요.');
+            return;
+        }
+        if (isNicknameAvailable !== true) {
+            alert('닉네임 중복 확인을 해주세요.');
+            return;
+        }
+        if (!selectedRegion) {
+            alert('지역을 선택해주세요.');
+            return;
+        }
+        if (childrenAges.some(age => !age)) {
+            alert('모든 자녀의 나이를 선택해주세요.');
+            return;
+        }
+        
+        const fullEmail = `${email.id}@${email.domain}`;
+        const signUpData: SignUpData = {
+            email: fullEmail,
+            password,
+            nickname,
+            socialType: '',
+            region: regions.find(r => r.id.toString() === selectedRegion) || { id: 0, name: "" },
+            ageTags: childrenAges.map(ageId => ageTags.find(tag => tag.id.toString() === ageId) || { id: 0, name: "" })
+        };
+
+        try {
+            const result = await signUp(signUpData);
+            console.log('회원가입 성공:', result);
+            alert('회원가입이 완료되었습니다.');
+            navigate(-1);
+        } catch (error) {
+            console.error('회원가입 실패:', error);
+            alert('회원가입 중 오류가 발생했습니다. 다시 시도해 주세요.');
+        }
     };
 
     return (
@@ -260,34 +325,54 @@ const Signin = () => {
 
                         <FormGroup className="mb-4">
                             <label>지역</label>
-                            <Input type="select" className="mt-1 pt-2 pb-2">
-                            <option>강남구</option>
+                            <Input 
+                                type="select" 
+                                className="mt-1 pt-2 pb-2"
+                                value={selectedRegion}
+                                onChange={(e) => setSelectedRegion(e.target.value)}
+                            >
+                                <option value="">선택하세요</option>
+                                {regions.map((region) => (
+                                    <option key={region.id} value={region.id.toString()}>
+                                        {region.name}
+                                    </option>
+                                ))}
                             </Input>
                         </FormGroup>
 
                         <FormGroup className="mb-4">
-                            <label>아이의 연령대</label>
-                            {childrenAges.map((age, index) => (
-                            <Row key={index} className="mt-2 g-2">
-                                <Col xs="8">
-                                <Input type="select" className="pt-2 pb-2" value={age} onChange={(e) => {
-                                    const newAges = [...childrenAges];
-                                    newAges[index] = e.target.value;
-                                    setChildrenAges(newAges);
-                                }}>
-                                    <option>24개월 미만</option>
-                                </Input>
-                                </Col>
-                                {index === childrenAges.length - 1 && (
-                                <Col xs="4">
-                                    <Button color="primary" onClick={handleAddChildAge}>
-                                    추가
-                                    </Button>
-                                </Col>
-                                )}
-                            </Row>
-                            ))}
-                        </FormGroup>
+                                <label>아이의 연령대</label>
+                                {childrenAges.map((age, index) => (
+                                    <Row key={index} className="mt-2 g-2">
+                                        <Col xs="8">
+                                            <Input 
+                                                type="select" 
+                                                className="pt-2 pb-2" 
+                                                value={age} 
+                                                onChange={(e) => {
+                                                    const newAges = [...childrenAges];
+                                                    newAges[index] = e.target.value;
+                                                    setChildrenAges(newAges);
+                                                }}
+                                            >
+                                                <option value="">선택하세요</option>
+                                                {ageTags.map((tag) => (
+                                                    <option key={tag.id} value={tag.id.toString()}>
+                                                        {tag.name}
+                                                    </option>
+                                                ))}
+                                            </Input>
+                                        </Col>
+                                        {index === childrenAges.length - 1 && (
+                                            <Col xs="4">
+                                                <Button color="primary" onClick={handleAddChildAge}>
+                                                    추가
+                                                </Button>
+                                            </Col>
+                                        )}
+                                    </Row>
+                                ))}
+                            </FormGroup>
 
                         <div className="text-center">
                             <Button color="primary" className="p-2" style={{ minWidth: '100%' }} type="submit">

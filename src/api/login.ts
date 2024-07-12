@@ -79,10 +79,6 @@ export const signUp = async (signUpData: SignUpData): Promise<any> => {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
     return await response.json();
   } catch (error) {
     console.error('Error during sign up:', error);

@@ -7,5 +7,5 @@ export const loginState = atom({
 
 export const userRoleState = atom({
   key: 'userRoleState',
-  default: 'user', // 일반사용자: user, 관리자: admin
+  default: 'user',
 });
