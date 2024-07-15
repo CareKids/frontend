@@ -1,4 +1,4 @@
-import { HomeInfo, SignInInfo, BoardInfo, BoardDetail, Region, AgeTag } from './types';
+import { HomeInfo, SignInInfo, BoardInfo, BoardDetail, Region, AgeTag, UserInfo, HospitalInfo, HospitalSearch, ClassInfo } from './types';
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -39,6 +39,29 @@ export const getSigninData = async (email: string, socialType: string): Promise<
     }
 
     const data: SignInInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching signin info:', error);
+    throw error;
+  }
+};
+
+export const getUserInfo = async (): Promise<UserInfo> => {  
+  try {
+    const response = await fetch(`${BASE_URL}/user-detail`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: UserInfo = await response.json();
     return data;
   } catch (error) {
     console.error('Error fetching home info:', error);
@@ -82,27 +105,99 @@ export const getAgeTags = async (): Promise<AgeTag[]> => {
   }
 };
 
-// export const getHospitalData = async (page: number, size: number): Promise<HospitalInfo> => {
-//   try {
-//     const response = await fetch(`${BASE_URL}/notice?page=${page}&size=${size}`, {
-//       method: 'GET',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       mode: 'cors',
-//     });
+export const getClassData = async (page: number, size: number): Promise<ClassInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/kindergarten?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
 
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-//     const data: BoardInfo = await response.json();
-//     return data;
-//   } catch (error) {
-//     console.error('Error fetching home info:', error);
-//     throw error;
-//   }
-// };
+    const data: ClassInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching kindergarten info:', error);
+    throw error;
+  }
+};
+
+export const filterClassData = async (params: HospitalSearch, page: number): Promise<ClassInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/kindergarten/search?page=${page}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query,
+        region: params.region
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching and filtering kindergartens:', error);
+    throw error;
+  }
+};
+
+export const getHospitalData = async (page: number, size: number): Promise<HospitalInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/hospital?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: HospitalInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching hospital info:', error);
+    throw error;
+  }
+};
+
+export const filterHospitalData = async (params: HospitalSearch, page: number): Promise<HospitalInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/hospital/search?page=${page}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query,
+        region: params.region
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching and filtering hospitals:', error);
+    throw error;
+  }
+};
 
 export const getBoardData = async (page: number, size: number): Promise<BoardInfo> => {
   try {
@@ -126,6 +221,53 @@ export const getBoardData = async (page: number, size: number): Promise<BoardInf
   }
 };
 
+export const getPlayData = async (page: number, size: number): Promise<ClassInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/hospital?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: ClassInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching home info:', error);
+    throw error;
+  }
+};
+
+export const filterPlayData = async (params: HospitalSearch, page: number): Promise<ClassInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/hospital/search?page=${page}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query,
+        region: params.region
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching and filtering hospitals:', error);
+    throw error;
+  }
+};
+
 export const getBoardDetailData = async (id: string): Promise<BoardDetail> => {
   try {
     const response = await fetch(`${BASE_URL}/notice/${id}`, {
@@ -141,7 +283,6 @@ export const getBoardDetailData = async (id: string): Promise<BoardDetail> => {
     }
 
     const data: BoardDetail = await response.json();
-    console.log(data)
     return data;
   } catch (error) {
     console.error('Error fetching board detail:', error);
