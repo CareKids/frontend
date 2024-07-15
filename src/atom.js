@@ -9,3 +9,8 @@ export const userRoleState = atom({
   key: 'userRoleState',
   default: 'user',
 });
+
+export const authLoadingState = atom({
+  key: 'authLoadingState',
+  default: true,
+});

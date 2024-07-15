@@ -1,36 +1,30 @@
 import React, { useEffect } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { loginState, userRoleState } from '../atom';
+import { loginState, userRoleState, authLoadingState } from '../atom';
 import { checkAuthStatus } from '../api/login';
 
 function Auth() {
   const setIsLoggedIn = useSetRecoilState(loginState);
   const setUserRole = useSetRecoilState(userRoleState);
+  const setAuthLoading = useSetRecoilState(authLoadingState);
 
   useEffect(() => {
     const verifyAuth = async () => {
+      setAuthLoading(true);
       try {
         const response = await checkAuthStatus();
         const { user_role, is_login } = response;
-
-        // 로그인 상태 설정
         setIsLoggedIn(is_login === 'true');
-
-        // 사용자 역할 설정
-        if (user_role === 'ROLE_ADMIN') {
-          setUserRole('admin');
-        } else {
-          setUserRole('user');
-        }
+        setUserRole(user_role === 'ROLE_ADMIN' ? 'admin' : 'user');
       } catch (error) {
         console.error('Failed to verify auth status:', error);
-        setIsLoggedIn(false);
-        setUserRole('user');
+      } finally {
+        setAuthLoading(false);
       }
     };
     
     verifyAuth();
-  }, [setIsLoggedIn, setUserRole]);
+  }, [setIsLoggedIn, setUserRole, setAuthLoading]);
 
   return null;
 }

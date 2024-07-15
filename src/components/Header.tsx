@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { loginState, userRoleState } from '../atom';
 
 type MenuItem = {
@@ -11,6 +11,8 @@ function Header() {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const isLoggedIn = useRecoilValue(loginState);
     const userRole = useRecoilValue(userRoleState);
+    const setIsLoggedIn = useSetRecoilState(loginState);
+    const setUserRole = useSetRecoilState(userRoleState);
 
     const [isNavCollapsed, setIsNavCollapsed] = useState(true);
     const handleNavCollapse = () => {
@@ -64,6 +66,34 @@ function Header() {
     const getProfileText = () => {
         if (!isLoggedIn) return '로그인';
         return userRole === 'admin' ? '관리자 페이지' : '마이페이지';
+    };
+
+    const handleLogout = async () => {
+        try {
+            const response = await fetch(`http://localhost:8080/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                mode: 'cors',
+            });
+        
+            if (!response.ok) {
+              throw new Error(`HTTP error status: ${response.status}`);
+            }
+        
+            const data = await response.json();
+            console.log('로그아웃 성공:', data.message);
+            document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            setUserRole('user');
+            setIsLoggedIn(false);
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('로그아웃 중 오류 발생:', error);
+            throw error;
+        }
     };
 
     return (
@@ -131,6 +161,11 @@ function Header() {
                     >
                         <span>{getProfileText()}</span>
                     </a>
+                    {isLoggedIn && (
+                        <button onClick={handleLogout} className="btn btn-outline-danger my-2 my-sm-0">
+                            로그아웃
+                        </button>
+                    )}
                 </div>
             </div>
         </nav>
@@ -155,7 +190,7 @@ function Header() {
                             )}
                         </li>
                     ))}
-                    <li className="nav-item">
+                    <li className="nav-item mb-2">
                         <a
                             href={getProfileLink()} 
                             className="my-2 my-sm-0 text-reset text-decoration-none"
@@ -163,6 +198,16 @@ function Header() {
                             <span style={{ fontWeight: 'bold' }}>{getProfileText()}</span>
                         </a>
                     </li>
+                    {isLoggedIn && (
+                        <li className="nav-item">
+                            <button
+                                onClick={handleLogout} 
+                                className="btn btn-outline-danger"
+                            >
+                                로그아웃
+                            </button>
+                        </li>
+                    )}
                 </ul>
             </div>
         </div>
