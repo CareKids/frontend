@@ -1,51 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Input, InputGroup, Card, CardBody, CardTitle, CardText, Row, Col, Container } from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faFilter, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { getHospitalData, filterHospitalData, getRegions } from '../api/load';
+import { HospitalInfo, HospitalItem, Region } from '../api/types';
 
-interface Hospital {
-  id: number;
-  placeName: string;
-  phone: string;
-  address: string;
-  type: string;
-  openingHours: string;
-}
+const formatTime = (time: number): string => {
+  return time.toString().padStart(2, '0');
+};
 
+const ITEMS_PER_PAGE = 12;
 const Hospital: React.FC = () => {
-  // filter 버튼 클릭 여부
+  const [hospitalInfo, setHospitalInfo] = useState<HospitalInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
-  };
-  
-  // 임시 데이터
-  const hospitals: Hospital[] = [
-    {
-      id: 1,
-      placeName: '케어키즈 소아과',
-      address: '서울시 강남구 역삼동',
-      phone: '010-1234-5678',
-      type: '내과',
-      openingHours: '09:00 - 21:00',
-    },
-    {
-      id: 2,
-      placeName: '키즈케어 약국',
-      address: '서울시 강남구 신사동',
-      phone: '010-1234-5678',
-      type: '약국',
-      openingHours: '08:00 - 20:00',
-    },
-  ];
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [regions, setRegions] = useState<Region[]>([]);
 
-  const handleSearch = () => {
-    // 검색하기 버튼 클릭 시 실행
+  useEffect(() => {
+    fetchRegions();
+    fetchInitialHospitalData();
+  }, []);
+
+  useEffect(() => {
+    searchAndFilter();
+  }, [selectedRegion]);
+
+  const fetchRegions = async () => {
+    try {
+      const regionData = await getRegions();
+      setRegions(regionData);
+    } catch (err) {
+      console.error('Failed to fetch regions:', err);
+      setError('지역 정보를 불러오는 데 실패했습니다.');
+    }
   };
+
+  const fetchInitialHospitalData = async () => {
+    setLoading(true);
+    try {
+      const data = await getHospitalData(currentPage, ITEMS_PER_PAGE);
+      setHospitalInfo(data);
+
+      if (!selectedRegion && data.region) {
+        setSelectedRegion(data.region);
+      }
+
+    } catch (err) {
+      setError('병원 정보를 불러오는 데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const searchAndFilter = async (page: number = currentPage) => {
+    if (!searchTerm && !selectedRegion) {
+      return fetchInitialHospitalData();
+    }
+
+    setLoading(true);
+    try {
+      const data = await filterHospitalData(
+        { 
+          query: searchTerm || null, 
+          region: selectedRegion || {}
+        }, 
+        page
+      );
+      setHospitalInfo(data);
+      setCurrentPage(page);
+    } catch (err) {
+      setError('검색에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchAndFilter = () => {
+    searchAndFilter(1);
+  };
+
+  const toggleFilters = () => setShowFilters(!showFilters);
+
+  const handleRegionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const regionId = Number(event.target.value);
+    const selectedRegion = regions.find(region => region.id === regionId) || null;
+    setSelectedRegion(selectedRegion);
+  };
+
+  const paginate = (pageNumber: number) => {
+    searchAndFilter(pageNumber);
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!hospitalInfo) return <div>No data available</div>;
+
+  const totalPages = hospitalInfo.pageInfo.total;
 
   return (
     <div className='App'>
@@ -53,54 +110,63 @@ const Hospital: React.FC = () => {
       <Container className="mt-4">
         <h1 className="mb-4"><b>긴급 진료기관</b></h1>
 
-        {/* 검색창 */}
         <div className="bg-white rounded-4 p-3 mb-4">
           <InputGroup>
-            <Input placeholder="검색어 입력" className="border-1" />
+            <Input 
+              placeholder="검색어 입력" 
+              className="border-1" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <Button color="primary" className="me-2" onClick={toggleFilters}>
               <FontAwesomeIcon icon={faFilter} className="me-2 rounded-4" />
               필터
             </Button>
-            <Button color="primary" onClick={handleSearch}>
+            <Button color="primary" onClick={handleSearchAndFilter}>
               <FontAwesomeIcon icon={faSearch} className="me-2 rounded-4" />
               검색하기
             </Button>
           </InputGroup>
         </div>
 
-        {/* 필터 */}
         {showFilters && (
           <div className="bg-light p-3 mb-4 rounded">
             <Row>
               <Col md={6}>
-                <Input type="select">
-                  <option>위치 선택</option>
-                  {/* TODO: 지역 목록 불러오기 */}
+                <Input 
+                  type="select" 
+                  value={selectedRegion?.id || ''} 
+                  onChange={handleRegionChange}
+                >
+                  {regions.map((region) => (
+                    <option key={region.id} value={region.id}>{region.name}</option>
+                  ))}
                 </Input>
               </Col>
             </Row>
           </div>
         )}
-
-        <div className="mb-3">
-          <div>검색 결과 {hospitals.length}건</div>
-        </div>
         
-        {/* 장소 목록 리스트 */}
         <Row>
-          {hospitals.map((result, index) => (
-            <Col md={4} key={index} className="mb-4">
+          {hospitalInfo.pageList.map((hospital: HospitalItem) => (
+            <Col md={4} key={hospital.id} className="mb-4">
               <Card className="h-100">
                 <CardBody>
                   <Row>
                     <Col>
-                      <Button color="secondary" size="sm" className="mb-2" disabled>{result.type}</Button>
-                      <CardTitle tag="h5" className="mb-2"><strong>{result.placeName}</strong></CardTitle>
+                      <Button color="secondary" size="sm" className="mb-2" disabled>{hospital.region.name}</Button>
+                      <CardTitle tag="h5" className="mb-2"><strong>{hospital.name}</strong></CardTitle>
                       <CardText>
-                        <strong>진료 항목 · </strong> {result.type}<br />
-                        <strong>주소 · </strong> {result.address}<br />
-                        <strong>연락처 · </strong> {result.phone}<br />
-                        <strong>운영시간 · </strong> {result.openingHours}
+                        <strong>진료 항목 · </strong> {hospital.type}<br />
+                        <strong>주소 · </strong> {hospital["new-address"] || hospital.address}<br />
+                        <strong>연락처 · </strong> {hospital.phone}<br />
+                        <strong>운영시간 · </strong> 
+                        {hospital["operate-time"].map((time, index) => (
+                          <span key={index}>
+                            {time["operation-day"]}: {formatTime(time.startTime[0])}:{formatTime(time.startTime[1])} - {formatTime(time.endTime[0])}:{formatTime(time.endTime[1])}
+                            {index < hospital["operate-time"].length - 1 ? ', ' : ''}
+                          </span>
+                        ))}
                       </CardText>
                     </Col>
                   </Row>
@@ -110,33 +176,30 @@ const Hospital: React.FC = () => {
           ))}
         </Row>
         
-        {/* TODO: Paginateion */}
-        {/* <div className="d-flex justify-content-center">
-          <Pagination>
-              <PaginationItem>
-              <PaginationLink first href="#" />
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink previous href="#" />
-              </PaginationItem>
-              <PaginationItem active>
-              <PaginationLink href="#">
-                  1
-              </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink href="#">
-                  2
-              </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink next href="#" />
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink last href="#" />
-              </PaginationItem>
-          </Pagination>
-        </div> */}
+        <nav aria-label="Page navigation" className="mt-4 bg-transparent">
+          <ul className="pagination justify-content-center">
+            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+              <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+                <FontAwesomeIcon icon={faChevronLeft} />
+              </button>
+            </li>
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                <button
+                  onClick={() => paginate(index + 1)}
+                  className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
+                >
+                  {index + 1}
+                </button>
+              </li>
+            ))}
+            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+              <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
+                <FontAwesomeIcon icon={faChevronRight} />
+              </button>
+            </li>
+          </ul>
+        </nav>
       </Container>
       <Footer />
     </div>    
