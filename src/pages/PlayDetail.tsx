@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,30 +6,45 @@ import { faList } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-
-interface Post {
-  id: string;
-  title: string;
-  type: string;
-  content: string;
-  date: string;
-}
+import { getPlayDetailData } from '../api/load';
+import { DetailPlayItem } from '../api/types';
 
 const PlayDetail: React.FC = () => {
+  const [playItem, setPlayItem] = useState<DetailPlayItem | null>(null);
   const { id } = useParams<{ id: string }>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const post: Post = {
-    id: id || '',
-    title: '밥먹기',
-    type: '5세 이상 ~ 7세 미만',
-    content: '야채를 안 먹는 우리 아이한테 어떻게하면 놀이를 접목시켜서 야채에 대한 거부감을 줄여줄 수 있을까요? 이 포스트를 통해 알아봅시다.',
-    date: '2024-06-25',
-  }
+  useEffect(() => {
+    if (!id) {
+      setError('유효하지 않은 ID입니다.');
+      setLoading(false);
+      return;
+    }
 
+    const fetchItem = async () => {    
+      setLoading(true);
+      try {
+        const playData = await getPlayDetailData(id);
+        setPlayItem(playData);
+      } catch (err) {
+        console.error('Failed to fetch play data:', err);
+        setError('놀이 정보를 불러오는 데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchItem();
+  }, [id]);
   const handleGoBack = () => {
     navigate(-1);
   };
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!playItem) return <div>No data available</div>;
 
   return (
     <div className='App'>
@@ -47,13 +62,36 @@ const PlayDetail: React.FC = () => {
                 pointerEvents: 'none' 
             }}
             >
-            {post.type}
+            {playItem['age-tag'].name}
             </Button>
-            <h1 className="mb-2 mt-2"><strong>{post.title}</strong></h1>
-            <div>{post.date}</div>
+            <h1 className="mb-2 mt-2"><strong>{playItem.title}</strong></h1>
                 
             <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
-            <div>{post.content}</div>
+            <div><strong>놀이 도구</strong></div>
+            <div className='mb-4' style={{ whiteSpace: 'pre-wrap',  wordBreak: 'break-word' }}>{playItem.tools}</div>
+            <div><strong>추천 나이</strong></div>
+            <div className='mb-4' style={{ whiteSpace: 'pre-wrap',  wordBreak: 'break-word' }}>{playItem['recommend-age']}</div>
+            <div><strong>놀이 방법</strong></div>
+            <div className='mb-4' style={{ whiteSpace: 'pre-wrap',  wordBreak: 'break-word' }}>{playItem.text}</div>
+            <div className='mb-1'><strong>발달 영역</strong></div>
+            <div className='mb-4'>
+            {playItem['dev-domains'].map((domain) => (
+              <Button
+                color="secondary"
+                outline
+                size="sm"
+                className="mb-2 me-2"
+                style={{
+                    fontSize: '0.8rem',
+                    borderColor: '#6c757d',
+                    color: '#6c757d',
+                    pointerEvents: 'none' 
+                }}
+                >
+                {domain.devDomainType}
+              </Button>
+            ))}
+            </div>
             <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
 
             <div className="text-center mt-4">

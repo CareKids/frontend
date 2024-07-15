@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Input, InputGroup, Card, CardBody, CardTitle, CardText, Row, Col, Container, Popover, PopoverBody } from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
+import { Button, Input, InputGroup, Row, Col, Container,  Popover, PopoverBody } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faFilter, faComments, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faFilter, faComments, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-
-interface PlayList {
-  id: number;
-  title: string;
-  type: string;
-  content: string;
-}
+import { getPlayData, filterPlayData, getAgeTags } from '../api/load';
+import { PlayBoardInfo, PlayItem, AgeTag } from '../api/types';
 
 interface Message {
   text: string;
@@ -21,8 +15,16 @@ interface Message {
   isWarning?: boolean;
 }
 
+const ITEMS_PER_PAGE = 12;
 const Play: React.FC = () => {
+  const [playInfo, setPlayInfo] = useState<PlayBoardInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAge, setSelectedAge] = useState<AgeTag | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ages, setAges] = useState<AgeTag[]>([]);
   const [showChatPopup, setShowChatPopup] = useState(true);
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -33,11 +35,10 @@ const Play: React.FC = () => {
   const popoverRef = useRef<HTMLDivElement>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
-  const toggleFilters = () => setShowFilters(!showFilters);
-  const toggleChat = () => {
-    setShowChat(!showChat);
-    setPopoverOpen(false);
-  };
+  useEffect(() => {
+    fetchAges();
+    fetchInitialPlayData();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -47,23 +48,91 @@ const Play: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const plays: PlayList[] = [
-    {
-      id: 1,
-      title: '공놀이',
-      type: '24개월 미만',
-      content: '24개월 미만 아이와 함께하기 좋은 놀이를 소개 드리겠습니다. 실내에서 할 수 있는 활동적인 놀이로...'
-    },
-    {
-      id: 2,
-      title: '밥먹기',
-      type: '5세 이상 ~ 7세 미만',
-      content: '야채를 안 먹는 우리 아이한테 어떻게하면 놀이를 접목시켜서 야채에 대한 거부감을 줄여줄 수 있을...'
-    },
-  ];
+  useEffect(() => {
+    searchAndFilter();
+  }, [selectedAge]);
 
-  const handleSearch = () => {
-    // 검색하기 버튼 클릭 시 실행
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // TODO: 최초 age 제대로 갱신 안되는 거 수정하기
+  const fetchAges = async () => {
+    try {
+      const ageData = await getAgeTags();
+      setAges(ageData);
+    } catch (err) {
+      console.error('Failed to fetch ages:', err);
+      setError('나이 정보를 불러오는 데 실패했습니다.');
+    }
+  };
+  
+  const fetchInitialPlayData = async () => {
+    setLoading(true);
+    try {
+      const data = await getPlayData(currentPage, ITEMS_PER_PAGE);
+      setPlayInfo(data);
+
+      if (!selectedAge && data.region) {
+        setSelectedAge(data.region);
+      }
+    } catch (err) {
+      setError('놀이 정보를 불러오는 데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const searchAndFilter = async (page: number = currentPage) => {
+    if (!searchTerm && !selectedAge) {
+      return fetchInitialPlayData();
+    }
+
+    setLoading(true);
+    try {
+      const data = await filterPlayData(
+        { 
+          query: searchTerm || null, 
+          "age-tag": selectedAge || {}
+        }, 
+        page
+      );
+      setPlayInfo(data);
+      setCurrentPage(page);
+    } catch (err) {
+      setError('검색에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchAndFilter = () => {
+    searchAndFilter(1);
+  };
+
+  const toggleFilters = () => setShowFilters(!showFilters);
+
+  const handleAgeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const ageId = Number(event.target.value);
+    const selectedAge = ages.find(age => age.id === ageId) || null;
+    setSelectedAge(selectedAge);
+  };
+
+  const paginate = (pageNumber: number) => {
+    searchAndFilter(pageNumber);
+  };  
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!playInfo) return <div>No data available</div>;
+
+  const totalPages = playInfo.pageInfo.total;
+
+  const toggleChat = () => {
+    setShowChat(!showChat);
+    setPopoverOpen(false);
   };
 
   const handleSendMessage = async () => {
@@ -86,12 +155,6 @@ const Play: React.FC = () => {
       handleSendMessage();
     }
   };
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
-
 
   return (
     <div className='App'>
@@ -99,59 +162,81 @@ const Play: React.FC = () => {
       <Container className="mt-4">
         <h1 className="mb-4"><b>놀이 정보</b></h1>
 
-        {/* 검색창 */}
         <div className="bg-white rounded-4 p-3 mb-4">
           <InputGroup>
-            <Input placeholder="검색어 입력" className="border-1" />
+            <Input 
+              placeholder="검색어 입력" 
+              className="border-1" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <Button color="primary" className="me-2" onClick={toggleFilters}>
               <FontAwesomeIcon icon={faFilter} className="me-2 rounded-4" />
               필터
             </Button>
-            <Button color="primary" onClick={handleSearch}>
+            <Button color="primary" onClick={handleSearchAndFilter}>
               <FontAwesomeIcon icon={faSearch} className="me-2 rounded-4" />
               검색하기
             </Button>
           </InputGroup>
         </div>
 
-        {/* 필터 */}
         {showFilters && (
           <div className="bg-light p-3 mb-4 rounded">
             <Row>
               <Col md={6}>
-                <Input type="select">
-                  <option>연령대</option>
-                  {/* TODO: 연령대 목록 불러오기 */}
+                <Input 
+                  type="select" 
+                  value={selectedAge?.id || ''} 
+                  onChange={handleAgeChange}
+                >
+                  {ages.map((age) => (
+                    <option key={age.id} value={age.id}>{age.name}</option>
+                  ))}
                 </Input>
               </Col>
             </Row>
           </div>
         )}
-
-        <div className="mb-3">
-          <div>검색 결과 {plays.length}건</div>
-        </div>
         
-        {/* 장소 목록 리스트 */}
         <Row>
-          {plays.map((result, index) => (
-            <Col md={4} key={index} className="mb-4">
-                <Card className="h-100">
-                    <Link to={`/play/${result.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <CardBody>
-                            <Row>
-                                <Col>
-                                    <Button color="secondary" size="sm" className="mb-2" disabled>{result.type}</Button>
-                                    <CardTitle tag="h5" className="mb-2"><strong>{result.title}</strong></CardTitle>
-                                    <CardText>
-                                        {result.content}
-                                    </CardText>
-                                </Col>
-                            </Row>
-                        </CardBody>
-                    </Link>
-                </Card>
-            </Col>
+          {playInfo.pageList.map((item: PlayItem) => (
+            <div className="col-md-4 mb-4" key={item.id}>
+              <div className="card" style={{ borderRadius: '10px', backgroundColor: '#ffffff' }}>
+                <Link to={`/play/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="card-body">
+                      <h4 className="card-title"
+                          style={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 1,
+                              WebkitBoxOrient: 'vertical',
+                          }}>{item.title}</h4>
+                      <div className="card-text mb-4" 
+                          style={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 5,
+                              WebkitBoxOrient: 'vertical',
+                              minHeight: '100px',
+                              maxHeight: '100px',
+                              fontSize: '14px'
+                          }}>
+                          {item.description}
+                      </div>
+                        <p className="card-text small text-muted">
+                            {new Date(item.createdAt[0], item.createdAt[1]-1, item.createdAt[2]).toLocaleDateString()}
+                        </p>
+                    </div>
+                </Link>
+              </div>
+          </div>
           ))}
         </Row>
         
@@ -230,6 +315,31 @@ const Play: React.FC = () => {
               </div>
             </div>
           )}
+        
+          <nav aria-label="Page navigation" className="mt-4 bg-transparent">
+            <ul className="pagination justify-content-center">
+              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+                  <FontAwesomeIcon icon={faChevronLeft} />
+                </button>
+              </li>
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                  <button
+                    onClick={() => paginate(index + 1)}
+                    className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </button>
+              </li>
+            </ul>
+          </nav>
         </Container>
         <Footer />
       </div>    

@@ -15,6 +15,10 @@ interface OperateTime {
   "operation-day": string;
 }
 
+interface DevDomain {
+  devDomainId: number;
+  devDomainType: string;
+}
 
 // 회원가입 interface
 export interface SignUpData {
@@ -58,6 +62,16 @@ export interface PlayItem {
   description: string;
   createdAt: number[];
   updatedAt: number[];
+}
+
+export interface DetailPlayItem {
+  id: number;
+  title: string;
+  text: string;
+  tools: string;
+  "recommend-age": string;
+  "age-tag": AgeTag;
+  "dev-domains": DevDomain[];
 }
 
 export interface HospitalItem {
@@ -115,14 +129,21 @@ export interface HospitalInfo {
   pageInfo: PageInfo;
   pageList: HospitalItem[];
   region: Region;
-  "age-tag": null | { id: number; name: string };
+  "age-tag": null | AgeTag;
 }
 
 export interface ClassInfo {
   pageInfo: PageInfo;
   pageList: ClassItem[];
   region: Region;
-  "age-tag": null | { id: number; name: string };
+  "age-tag": null | AgeTag;
+}
+
+export interface PlayBoardInfo {
+  pageInfo: PageInfo;
+  pageList: PlayItem[];
+  region: null | Region;
+  "age-tag": null | AgeTag;
 }
 
 // 상세페이지 interface
@@ -135,9 +156,13 @@ export interface BoardDetail {
   description: string;
 }
 
-
 // 검색 interface
 export interface HospitalSearch {
   query: string | null;
   region: Region | {};
+}
+
+export interface PlaySearch {
+  query: string | null;
+  "age-tag": AgeTag | {};
 }
