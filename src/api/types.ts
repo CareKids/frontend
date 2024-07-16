@@ -20,6 +20,22 @@ interface DevDomain {
   devDomainType: string;
 }
 
+interface User {
+  id: number;
+  nickname: string;
+}
+
+interface File {
+  fileName: string;
+  fileSaveName: string;
+  "file-path": string;
+}
+
+export interface ApiError {
+  status: number;
+  message: string;
+}
+
 // 회원가입 interface
 export interface SignUpData {
   email: string;
@@ -64,14 +80,14 @@ export interface PlayItem {
   updatedAt: number[];
 }
 
-export interface DetailPlayItem {
+export interface PolicyItem {
   id: number;
   title: string;
-  text: string;
-  tools: string;
-  "recommend-age": string;
+  description: string;
+  createdAt: number[];
+  updatedAt: number[];
+  region: Region;
   "age-tag": AgeTag;
-  "dev-domains": DevDomain[];
 }
 
 export interface HospitalItem {
@@ -100,6 +116,22 @@ export interface BoardItem {
   updatedAt: number[];
   id: number;
   title: string;
+}
+
+export interface QnAItem {
+  createdAt: number[];
+  updatedAt: number[];
+  id: number;
+  title: string;
+  secret: boolean;
+  questionCheck: boolean;
+  users: User;
+}
+
+export interface QnASubmitItem {
+  title: string;
+  secret: boolean;
+  text: string;
 }
 
 // 홈 화면 interface
@@ -146,6 +178,20 @@ export interface PlayBoardInfo {
   "age-tag": null | AgeTag;
 }
 
+export interface PolicyBoardInfo {
+  pageInfo: PageInfo;
+  pageList: PolicyItem[];
+  region: Region;
+  'age-tag': AgeTag;
+}
+
+export interface QnAInfo {
+  'pageInfo': PageInfo;
+  'pageList': QnAItem[];
+  region: null | Region;
+  "age-tag": null | AgeTag;
+}
+
 // 상세페이지 interface
 export interface BoardDetail {
   createdAt: number[];
@@ -156,6 +202,42 @@ export interface BoardDetail {
   description: string;
 }
 
+export interface DetailPlayItem {
+  id: number;
+  title: string;
+  text: string;
+  tools: string;
+  "recommend-age": string;
+  "age-tag": AgeTag;
+  "dev-domains": DevDomain[];
+}
+
+export interface DetailPolicyItem {
+  id: number;
+  title: string;
+  text: string;
+  target: string;
+  process: string;
+  url: string;
+  region: Region[];
+  "age-tag": AgeTag[];
+}
+
+export interface DetailQnAItem {
+  id: number;
+  title: string;
+  text: string;
+  secret: boolean;
+  author: User;
+  check: boolean;
+  answer: null | string;
+}
+
+export interface DetailQnaInfo {
+  data: DetailQnAItem;
+  files: File[];
+}
+
 // 검색 interface
 export interface HospitalSearch {
   query: string | null;
@@ -164,5 +246,11 @@ export interface HospitalSearch {
 
 export interface PlaySearch {
   query: string | null;
+  "age-tag": AgeTag | {};
+}
+
+export interface PolicySearch {
+  query: string | null;
+  region: Region | {};
   "age-tag": AgeTag | {};
 }

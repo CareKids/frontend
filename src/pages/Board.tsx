@@ -11,9 +11,7 @@ import { getBoardData } from '../api/load';
 import { BoardInfo, BoardItem } from '../api/types';
 
 const ITEMS_PER_PAGE = 10;
-
 const Board: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [boardData, setBoardData] = useState<BoardInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,10 +49,6 @@ const Board: React.FC = () => {
   if (error) return <div>{error}</div>;
   if (!boardData) return <div>데이터가 없습니다.</div>;
 
-  const filteredPosts = boardData.pageList.filter((post) =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const totalPages = boardData.pageInfo.total;
 
   return (
@@ -72,7 +66,7 @@ const Board: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredPosts.map((post: BoardItem) => (
+              {boardData['pageList'].map((post: BoardItem) => (
                 <tr key={post.id} onClick={() => handleRowClick(post.id)} style={{ cursor: 'pointer' }}>
                   <td className="text-center">{post.id}</td>
                   <td>{post.title}</td>

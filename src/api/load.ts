@@ -1,4 +1,4 @@
-import { HomeInfo, SignInInfo, BoardInfo, BoardDetail, Region, AgeTag, UserInfo, HospitalInfo, HospitalSearch, ClassInfo, PlayBoardInfo, PlaySearch, PlayItem, DetailPlayItem } from './types';
+import { HomeInfo, SignInInfo, BoardInfo, BoardDetail, Region, AgeTag, UserInfo, HospitalInfo, HospitalSearch, ClassInfo, PlayBoardInfo, PlaySearch, DetailPlayItem, PolicyBoardInfo, PolicySearch, DetailPolicyItem, QnAInfo, DetailQnaInfo, ApiError } from './types';
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -308,6 +308,147 @@ export const getPlayDetailData = async (id: string): Promise<DetailPlayItem> => 
     return data;
   } catch (error) {
     console.error('Error fetching play detail:', error);
+    throw error;
+  }
+};
+
+export const getPolicyData = async (page: number, size: number): Promise<PolicyBoardInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/kids-policy?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: PolicyBoardInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching policy info:', error);
+    throw error;
+  }
+};
+
+export const filterPolicyData = async (params: PolicySearch, page: number): Promise<PolicyBoardInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/kids-policy/search?page=${page}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query,
+        region: params.region,
+        "age-tag": params['age-tag']
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching and filtering policies:', error);
+    throw error;
+  }
+};
+
+export const getPolicyDetailData = async (id: string): Promise<DetailPolicyItem> => {
+  try {
+    const response = await fetch(`${BASE_URL}/kids-policy/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: DetailPolicyItem = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching policy detail:', error);
+    throw error;
+  }
+};
+
+export const getQnAData = async (page: number, size: number): Promise<QnAInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/question?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: QnAInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching policy info:', error);
+    throw error;
+  }
+};
+
+export const postQnAData = async (formData: FormData) => {
+  try {
+    const response = await fetch(`${BASE_URL}/question/edit`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error posting QnA info:', error);
+    throw error;
+  }
+};
+
+export const getQnADetailData = async (id: string): Promise<DetailQnaInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/question/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+      credentials: 'include',
+    });
+  
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const apiError: ApiError = {
+        status: response.status,
+        message: errorData.message || '알 수 없는 오류가 발생했습니다.'
+      };
+      throw apiError;
+    }
+
+    const data: DetailQnaInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching QnA detail:', error);
     throw error;
   }
 };

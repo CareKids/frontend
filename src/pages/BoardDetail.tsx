@@ -1,83 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Card, CardBody, Button } from 'reactstrap';
+import { Container, Card, CardBody, Button, Spinner } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faList, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faList } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  date: string;
-  attachments: Attachment[];
-}
-
-interface Attachment {
-    name: string;
-    url: string;
-}
+import { getBoardDetailData } from '../api/load';
+import { BoardDetail as BoardDetailResponse } from '../api/types';
 
 const BoardDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [post, setPost] = useState<BoardDetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const post: Post = {
-    id: id || '',
-    title: '게시글 제목입니다',
-    content: '공지사항입니다.',
-    author: '작성자',
-    date: '2024-06-25 10:00',
-    attachments: [
-        { name: '첨부파일1', url: 'sample.png'},
-        { name: '첨부파일2', url: 'sample.png'}
-    ]
-  };
+  useEffect(() => {
+    const fetchBoardDetail = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const data = await getBoardDetailData(id);
+        setPost(data);
+        setError(null);
+      } catch (err) {
+        setError('게시글을 불러오는데 실패했습니다.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBoardDetail();
+  }, [id]);
 
   const handleGoBack = () => {
     navigate(-1);
   };
 
+  if (loading) return <div className="text-center mt-5"><Spinner color="primary" /></div>;
+  if (error) return <div className="text-center mt-5 text-danger">{error}</div>;
+  if (!post) return <div className="text-center mt-5">게시글을 찾을 수 없습니다.</div>;
+
   return (
     <div className='App'>
-      <Header></Header>
+      <Header />
       <Container className="mt-4">
         <h1 className="mb-2 mt-2"><strong>{post.title}</strong></h1>
-        <div>{post.date}</div>
-            
-        <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
-        <div>{post.content}</div>
+        <div>{new Date(post.createdAt[0], post.createdAt[1] - 1, post.createdAt[2]).toLocaleString()}</div>
         
-        <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
-        {post.attachments && post.attachments.length > 0 && (
-                <Card className="mt-4 mb-4">
-                    <CardBody>
-                    <h5 className="mb-3">첨부파일</h5>
-                    {post.attachments.map((attachment, index) => (
-                        <div key={index} className="d-flex justify-content-between align-items-center mb-2">
-                        <span>{attachment.name}</span>
-                        <Button size="sm" href={attachment.url} target="_blank" download>
-                            <FontAwesomeIcon icon={faDownload} className="me-2" />
-                            다운로드
-                        </Button>
-                        </div>
-                    ))}
-                    </CardBody>
-                </Card>
-            )}
+        {post.img && (
+          <div className="mt-4">
+            <img src={post.img} alt="게시글 이미지" className="img-fluid" />
+          </div>
+        )}
+
+        <div className='mt-4'>{post.description}</div>
+        
         <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
 
         <div className="text-center mt-4">
-        <Button color="primary" onClick={handleGoBack}>
+          <Button color="primary" onClick={handleGoBack}>
             <FontAwesomeIcon icon={faList} className="me-2" />
             목록으로 돌아가기
-        </Button>
+          </Button>
         </div>
       </Container>
-      <Footer></Footer>
+      <Footer />
     </div>
   );
 };
