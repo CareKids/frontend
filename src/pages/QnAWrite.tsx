@@ -7,6 +7,8 @@ import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
+import { postQnAData } from '../api/load';
+
 const QnAWrite: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,12 +17,31 @@ const QnAWrite: React.FC = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: API 호출
-    console.log('제목:', title);
-    console.log('내용:', content);
-    navigate('/qna');
+    
+    const formData = new FormData();
+
+    const blob = new Blob([JSON.stringify({
+      title: title,
+      text: content,
+      secret: isPrivate
+    })], {type: 'application/json'})
+    formData.append('data', blob, 'data.json')
+
+    if (attachments && attachments.length > 0) {
+      attachments.forEach((file, index) => {
+        formData.append(`files`, file);
+      });
+    }
+
+    try {
+      const response = await postQnAData(formData);
+      console.log('API 응답:', response);
+      navigate('/qna');
+    } catch (error) {
+      console.error('API 오류:', error);
+    }
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,7 +91,7 @@ const QnAWrite: React.FC = () => {
               className='mb-2 p-2'
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              style={{ height: '300px' }}
+              style={{ height: '300px', resize: 'none'}}
               required
             />
           </FormGroup>

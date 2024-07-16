@@ -1,63 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faPencilAlt, faLock } from '@fortawesome/free-solid-svg-icons';
+import { useRecoilValue } from 'recoil';
+import { loginState } from '../atom';
 
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 
-interface Post {
-  id: number;
-  title: string;
-  author: string;
-  date: string;
-  progress: string;
-  isSecret: boolean;
-}
+import { getQnAData } from '../api/load';
+import { QnAInfo, QnAItem } from '../api/types';
 
+const ITEMS_PER_PAGE = 10;
 const QnA: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 10;
-
-  const dummyPosts: Post[] = Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    title: `게시글 제목 ${i + 1}`,
-    author: '케어키즈',
-    date: '2024-06-24',
-    progress: '처리완료',
-    isSecret: Math.random() < 0.3,
-  }));
-
-  const filteredPosts = dummyPosts.filter((post) =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const [qnaData, setQnAdata] = useState<QnAInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const isLoggedIn = useRecoilValue(loginState);
   
   const navigate = useNavigate();
-  const handleRowClick = (post: Post) => {
-    if (post.isSecret) {
-      // TODO: 작성자 검증 API
-      const isAuthor = window.confirm("작성자 본인입니까?");
-      if (isAuthor) {
-        navigate(`/qna/${post.id}`);
-      } else {
-        alert("비밀글은 작성자만 볼 수 있습니다.");
+
+  useEffect(() => {
+    const fetchBoardData = async () => {
+      try {
+        setLoading(true);
+        const data = await getQnAData(currentPage, ITEMS_PER_PAGE);
+        setQnAdata(data);
+        setError(null);
+      } catch (err) {
+        setError('데이터를 불러오는 데 실패했습니다.');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } else {
+    };
+
+    fetchBoardData();
+  }, [currentPage]);
+
+  const handleRowClick = (post: QnAItem) => {
+    if (isLoggedIn) {
       navigate(`/qna/${post.id}`);
+    }
+    else {
+      alert('로그인을 해주세요.');
     }
   };
 
   const handleWrite = () => {
-    navigate('/qna/write');
+    if (isLoggedIn) {
+      navigate('/qna/write');
+    }
+    else {
+      alert('로그인을 해주세요.');
+    }
   };
+
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>{error}</div>;
+  if (!qnaData) return <div>데이터가 없습니다.</div>;
+
+  const totalPages = qnaData.pageInfo.total;
 
   return (
     <div className='App'>
@@ -67,7 +77,7 @@ const QnA: React.FC = () => {
             <div className="bg-white p-4 rounded shadow"> 
                 <div className="row mb-4 align-items-center">
                     <div className="col-md-3">
-                        <div className="input-group">
+                        {/* <div className="input-group">
                             <input
                                 type="text"
                                 className="form-control"
@@ -75,7 +85,7 @@ const QnA: React.FC = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                        </div>
+                        </div> */}
                     </div>
                     <div className="col-md-9 text-end">
                         <Button color="primary" onClick={handleWrite}>
@@ -96,46 +106,46 @@ const QnA: React.FC = () => {
                     </tr>
                     </thead>
                     <tbody>
-                    {currentPosts.map((post) => (
+                    {qnaData?.pageList.map((post) => (
                         <tr key={post.id} onClick={() => handleRowClick(post)} style={{ cursor: 'pointer' }}>
                             <td className="text-center">{post.id}</td>
                             <td>
                                 {post.title}
-                                {post.isSecret && (
+                                {post.secret && (
                                     <FontAwesomeIcon icon={faLock} className="ms-2 text-muted" />
                                 )}
                             </td>
-                            <td className="text-center">{post.progress}</td>
-                            <td className="text-center">{post.author}</td>
-                            <td className="text-center">{post.date}</td>
+                            <td className="text-center">{post.questionCheck? "처리완료": "답변대기"}</td>
+                            <td className="text-center">{post.users.nickname}</td>
+                            <td className="text-center">{new Date(post.createdAt[0], post.createdAt[1] - 1, post.createdAt[2]).toLocaleDateString()}</td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
                 
                 <nav aria-label="Page navigation" className="mt-4">
-                    <ul className="pagination justify-content-center">
-                        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                        <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)}>
-                            <FontAwesomeIcon icon={faChevronLeft} />
+                  <ul className="pagination justify-content-center">
+                    <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                      <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+                        <FontAwesomeIcon icon={faChevronLeft} />
+                      </button>
+                    </li>
+                    {Array.from({ length: totalPages }).map((_, index) => (
+                      <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                        <button 
+                          onClick={() => paginate(index + 1)} 
+                          className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
+                        >
+                          {index + 1}
                         </button>
-                        </li>
-                        {Array.from({ length: Math.ceil(filteredPosts.length / postsPerPage) }).map((_, index) => (
-                        <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                            <button 
-                            onClick={() => paginate(index + 1)} 
-                            className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
-                            >
-                            {index + 1}
-                            </button>
-                        </li>
-                        ))}
-                        <li className={`page-item ${currentPage === Math.ceil(filteredPosts.length / postsPerPage) ? 'disabled' : ''}`}>
-                        <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)}>
-                            <FontAwesomeIcon icon={faChevronRight} />
-                        </button>
-                        </li>
-                    </ul>
+                      </li>
+                    ))}
+                    <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
+                        <FontAwesomeIcon icon={faChevronRight} />
+                      </button>
+                    </li>
+                  </ul>
                 </nav>
             </div>
         </div>

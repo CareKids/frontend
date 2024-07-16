@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef  } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Button, Card, CardBody } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,60 +6,73 @@ import { faList, faDownload } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { getQnADetailData } from '../api/load';
+import { DetailQnaInfo, ApiError } from '../api/types';
 
-interface Attachment {
-  name: string;
-  url: string;
-}
-
-interface Answer {
-  content: string;
-  author: string;
-  date: string;
-}
-
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  date: string;
-  progress: string;
-  attachments?: Attachment[];
-  answer?: Answer;
+function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    'message' in error &&
+    typeof (error as ApiError).status === 'number' &&
+    typeof (error as ApiError).message === 'string'
+  );
 }
 
 const QnADetail: React.FC = () => {
+  const [qnaInfo, setQnaInfo] = useState<DetailQnaInfo | null>(null);
   const { id } = useParams<{ id: string }>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const fetchAttemptedRef = useRef(false);
 
-  const post: Post = {
-    id: id || '',
-    title: '문의사항입니다',
-    content: '질문내용입니다.\n질문내용입니다',
-    author: '작성자',
-    date: '2024-06-25 10:00',
-    progress: '처리완료',
-    attachments: [
-      { name: '첨부파일1.pdf', url: '/path/to/file1.pdf' },
-      { name: '첨부파일2.jpg', url: '/path/to/file2.jpg' },
-    ],
-    answer: {
-      content: '답변 내용입니다.\n문의하신 내용에 대해 다음과 같이 답변 드립니다.',
-      author: '관리자',
-      date: '2024-06-26 14:00',
-    },
-  };
+  const fetchItem = useCallback(async () => {
+    if (!id || fetchAttemptedRef.current) return;
+
+    fetchAttemptedRef.current = true;
+    setLoading(true);
+
+    try {
+      const qnaData = await getQnADetailData(id);
+      setQnaInfo(qnaData);
+    } catch (err) {
+      if (isApiError(err)) {
+        if (err.status === 400 && err.message === " 잠겨 있는 글입니다.") {
+          alert("비밀글입니다.");
+          navigate('/qna', { replace: true });
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('문의 사항을 불러오는 데 실패했습니다.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [id, navigate]);
+
+  useEffect(() => {
+    fetchItem();
+  }, [fetchItem]);
+
+  if (!id) {
+    return <div>유효하지 않은 ID입니다.</div>;
+  }
 
   const handleGoBack = () => {
     navigate(-1);
   };
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!qnaInfo) return <div>No data available</div>;
 
   return (
     <div className='App'>
       <Header />
       <Container className="mt-4">
-        {/* 처리 상태 */}
         <Button
         color="secondary"
         outline
@@ -72,24 +85,21 @@ const QnADetail: React.FC = () => {
             pointerEvents: 'none' 
         }}
         >
-        {post.progress}
+        {qnaInfo.data.check? "처리완료": "답변대기"}
         </Button>
 
-        {/* 게시글 제목, 작성자, 작성일 */}
-        <h1 className="mb-2 mt-2"><strong>{post.title}</strong></h1>
-        <div>{post.author} · {post.date}</div>
+        <h1 className="mb-2 mt-2"><strong>{qnaInfo.data.title}</strong></h1>
+        <div>{qnaInfo.data.author.nickname}</div>
             
         <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
-        {/* 게시글 내용 */}
-        <div style={{ whiteSpace: 'pre-wrap' }}>{post.content}</div>
+        <div style={{ whiteSpace: 'pre-wrap' }}>{qnaInfo.data.text}</div>
         
-        {/* 첨부파일 */}
-        {post.attachments && post.attachments.length > 0 && (
+        {qnaInfo.files && qnaInfo.files.length > 0 && (
           <div className="mt-3">
-            {post.attachments.map((file, index) => (
+            {qnaInfo.files.map((file, index) => (
               <div key={index} className="mb-2">
                 <FontAwesomeIcon icon={faDownload} className="me-2" />
-                <a href={file.url} download>{file.name}</a>
+                <a href={file['file-path']} download>{file.fileName}</a>
               </div>
             ))}
           </div>
@@ -97,14 +107,13 @@ const QnADetail: React.FC = () => {
 
         <hr style={{ border: 'none', height: '2px', backgroundColor: '#dddddd' }} />
 
-        {/* 답변 등록 시 표시 */}
-        {post.answer && (
+        {qnaInfo.data.answer && (
           <Card className="mt-4 mb-4">
             <CardBody>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{post.answer.content}</div>
-              <div className="mt-3 text-muted">
+              <div style={{ whiteSpace: 'pre-wrap' }}>{qnaInfo.data.answer}</div>
+              {/* <div className="mt-3 text-muted">
                 {post.answer.author} · {post.answer.date}
-              </div>
+              </div> */}
             </CardBody>
           </Card>
         )}

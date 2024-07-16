@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Form, FormGroup, Input, Card, CardBody, Container, Row, Col, Alert } from 'reactstrap';
+import { Button, Form, FormGroup, Input, Card, CardBody, Container, Row, Col } from 'reactstrap';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
