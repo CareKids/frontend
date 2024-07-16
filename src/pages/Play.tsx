@@ -58,7 +58,6 @@ const Play: React.FC = () => {
     }
   }, [messages]);
 
-  // TODO: 최초 age 제대로 갱신 안되는 거 수정하기
   const fetchAges = async () => {
     try {
       const ageData = await getAgeTags();
@@ -75,8 +74,8 @@ const Play: React.FC = () => {
       const data = await getPlayData(currentPage, ITEMS_PER_PAGE);
       setPlayInfo(data);
 
-      if (!selectedAge && data.region) {
-        setSelectedAge(data.region);
+      if (!selectedAge && data['age-tag']) {
+        setSelectedAge(data['age-tag'])
       }
     } catch (err) {
       setError('놀이 정보를 불러오는 데 실패했습니다.');
@@ -215,7 +214,7 @@ const Play: React.FC = () => {
                               WebkitLineClamp: 1,
                               WebkitBoxOrient: 'vertical',
                           }}>{item.title}</h4>
-                      <div className="card-text mb-4" 
+                      <div className="card-text mb-2" 
                           style={{
                               whiteSpace: 'pre-wrap',
                               wordBreak: 'break-word',
@@ -230,9 +229,6 @@ const Play: React.FC = () => {
                           }}>
                           {item.description}
                       </div>
-                        <p className="card-text small text-muted">
-                            {new Date(item.createdAt[0], item.createdAt[1]-1, item.createdAt[2]).toLocaleDateString()}
-                        </p>
                     </div>
                 </Link>
               </div>

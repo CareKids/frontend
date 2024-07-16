@@ -38,6 +38,7 @@ const PlayDetail: React.FC = () => {
     
     fetchItem();
   }, [id]);
+  
   const handleGoBack = () => {
     navigate(-1);
   };
