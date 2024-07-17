@@ -31,6 +31,7 @@ function Place() {
         setCurrentPost(post);
         setEditModal(true);
     };
+    
     const openImageInNewTab = (imageUrl: string) => {
         window.open(imageUrl, '_blank');
     };
