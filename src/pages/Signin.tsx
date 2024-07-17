@@ -57,7 +57,6 @@ const Signin = () => {
         };
     }, [showVerification, timer]);
 
-
     const handleSendVerification = async () => {
         try {
             await sendVerificationEmail(email.id, email.domain);

@@ -70,7 +70,7 @@ function Header() {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/logout`, {
+            const response = await fetch(`http://localhost:8080/api/logout`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -85,8 +85,6 @@ function Header() {
         
             const data = await response.json();
             console.log('로그아웃 성공:', data.message);
-            document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             setUserRole('user');
             setIsLoggedIn(false);
             window.location.href = '/login';
@@ -199,14 +197,14 @@ function Header() {
                         </a>
                     </li>
                     {isLoggedIn && (
-                        <li className="nav-item">
-                            <button
-                                onClick={handleLogout} 
-                                className="btn btn-outline-danger"
-                            >
-                                로그아웃
-                            </button>
-                        </li>
+                    <li className="nav-item mb-2">
+                        <a
+                            onClick={handleLogout} 
+                            className="my-2 my-sm-0 text-reset text-decoration-none"
+                        >
+                            <span style={{ fontWeight: 'bold' }}>로그아웃</span>
+                        </a>
+                    </li>
                     )}
                 </ul>
             </div>

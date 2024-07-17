@@ -130,3 +130,35 @@ export const checkAuthStatus = async() => {
     return false;
   }
 }
+
+export const changePassword = async (email: string, password: string): Promise<any> => {
+  try {
+    const response = await fetch(`${BASE_URL}/password-change`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "user-email": email,
+        "new-password": password
+      }),
+      credentials: 'include',
+      redirect: 'manual'
+    });
+
+    if (response.type === 'opaqueredirect') {      
+      window.location.href = '/';
+      return { success: true, message: "리다이렉트됨" };
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('로그인 중 오류 발생:', error);
+    throw error;
+  }
+};
