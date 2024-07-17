@@ -28,7 +28,7 @@ const Play: React.FC = () => {
   const [showChatPopup, setShowChatPopup] = useState(true);
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { text: "안녕하세요, 놀이 정보에 대해 궁금한 게 있다면 물어보세요. ex) 5세 아이와 실내에서 같이 할 수 있는 놀이를 추천해줘", isUser: false }
+    { text: "안녕하세요, 놀이 정보에 대해 궁금한 게 있다면 물어보세요.\n ex) 5세 아이와 실내에서 같이 할 수 있는 놀이를 추천해줘", isUser: false }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -136,17 +136,35 @@ const Play: React.FC = () => {
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === '') return;
-
+  
     const newUserMessage: Message = { text: inputMessage, isUser: true };
     setMessages(prevMessages => [...prevMessages, newUserMessage]);
     setInputMessage('');
-
-    // API 요청 (실제 구현 시 이 부분을 서버 요청으로 대체)
-    setTimeout(() => {
+  
+    try {
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: inputMessage }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const chatbot_response = await response.json();
+  
       const warningMessage: Message = { text: "이 메시지는 ChatGPT가 생성한 메시지입니다", isUser: false, isWarning: true };
-      const botResponse: Message = { text: "API 구현 시 이 부분에 ChatGPT의 응답이 표시됩니다.", isUser: false };
+      const botResponse: Message = { text: convertText(chatbot_response.chatbot_response), isUser: false };
+      
       setMessages(prevMessages => [...prevMessages, warningMessage, botResponse]);
-    }, 1000);
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage: Message = { text: "죄송합니다. 응답을 받아오는 데 문제가 발생했습니다.", isUser: false, isWarning: true };
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -154,6 +172,10 @@ const Play: React.FC = () => {
       handleSendMessage();
     }
   };
+
+  const convertText = (text: string) => {
+    return text.replace(/\*\*(.*?)\*\*/g, '$1');
+  }
 
   return (
     <div className='App'>
@@ -236,7 +258,6 @@ const Play: React.FC = () => {
           ))}
         </Row>
         
-          {/* 채팅 버튼 및 팝업 */}
           <div className="position-fixed" style={{ bottom: '20px', right: '20px' }} ref={popoverRef}>
             <Button
               id="chatButton"
@@ -266,7 +287,6 @@ const Play: React.FC = () => {
             </Popover>
           </div>
 
-          {/* 채팅창 */}
           {showChat && (
             <div className="position-fixed bg-white shadow" style={{ bottom: '90px', right: '20px', width: '500px', height: '600px', borderRadius: '10px', zIndex: 9999 }}>
               <div className="d-flex justify-content-between align-items-center p-2 bg-light">
@@ -279,10 +299,9 @@ const Play: React.FC = () => {
                     key={index} 
                     className={`d-flex mb-2 ${message.isUser ? 'justify-content-end' : 'justify-content-start'}`}
                   >
-                    <div
-                      style={{
-                        wordWrap: 'break-word'
-                      }}
+                    <div 
+                      contentEditable="true"
+                      style={{ whiteSpace: 'pre-wrap' }}
                       className={`p-2 rounded ${
                         message.isWarning
                           ? 'bg-secondary text-white w-100 text-center'
