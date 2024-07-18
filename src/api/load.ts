@@ -1,4 +1,4 @@
-import { HomeInfo, SignInInfo, BoardInfo, BoardDetail, Region, AgeTag, UserInfo, HospitalInfo, HospitalSearch, ClassInfo, PlayBoardInfo, PlaySearch, DetailPlayItem, PolicyBoardInfo, PolicySearch, DetailPolicyItem, QnAInfo, DetailQnaInfo, ApiError } from './types';
+import { HomeInfo, SignInInfo, BoardInfo, BoardDetail, Region, AgeTag, UserInfo, HospitalInfo, HospitalSearch, ClassInfo, PlayBoardInfo, PlaySearch, DetailPlayItem, PolicyBoardInfo, PolicySearch, DetailPolicyItem, QnAInfo, DetailQnaInfo, ApiError, RegionMaincate, PlaceSearch, PlaceInfo } from './types';
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -101,6 +101,72 @@ export const getAgeTags = async (): Promise<AgeTag[]> => {
     return data;
   } catch (error) {
     console.error('Error fetching regions:', error);
+    throw error;
+  }
+};
+
+export const getRegionAndCate = async (): Promise<RegionMaincate> => {
+  try {
+    const response = await fetch(`${BASE_URL}/region-maincate`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+    });
+
+    const data: RegionMaincate = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching regions:', error);
+    throw error;
+  }
+};
+
+export const getPlaceData = async (page: number, size: number): Promise<PlaceInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/place?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: PlaceInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching place info:', error);
+    throw error;
+  }
+};
+
+export const filterPlaceData = async (params: PlaceSearch, page: number): Promise<PlaceInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/place/search?page=${page}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query,
+        region: params.region,
+        maincate: params.maincate
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching and filtering places:', error);
     throw error;
   }
 };

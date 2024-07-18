@@ -9,7 +9,7 @@ export interface AgeTag {
   name: string;
 }
 
-interface OperateTime {
+export interface OperateTime {
   startTime: [number, number];
   endTime: [number, number];
   "operation-day": string;
@@ -20,12 +20,12 @@ interface DevDomain {
   devDomainType: string;
 }
 
-interface User {
+export interface User {
   id: number;
   nickname: string;
 }
 
-interface File {
+export interface File {
   fileName: string;
   fileSaveName: string;
   "file-path": string;
@@ -34,6 +34,26 @@ interface File {
 export interface ApiError {
   status: number;
   message: string;
+}
+
+interface SubCate {
+  placeSubcateId: number;
+  placeSubcateName: string;
+}
+
+export interface MainCate {
+  id: number;
+  name: string
+}
+
+interface Keyword {
+  keywordId: number;
+  keywordName: string;
+}
+
+export interface RegionMaincate {
+  region: Region[];
+  categories: MainCate[];
 }
 
 // 회원가입 interface
@@ -70,6 +90,18 @@ export interface PageInfo {
   total: number;
   page: number;
   size: number;
+}
+
+export interface PlaceItem {
+  placeId: number;
+  placeName: string;
+  placeImgUrl: string;
+  placeAddress: null | string;
+  placeNewAddress: null | string;
+  placeOperateTime: string;
+  placeSubcate: SubCate;
+  placeMaincate: MainCate;
+  placeKeywords: Keyword[];
 }
 
 export interface PlayItem {
@@ -155,6 +187,13 @@ export interface HomeInfo {
 export interface BoardInfo {
   'pageInfo': PageInfo;
   'pageList': BoardItem[];
+}
+
+export interface PlaceInfo {
+  pageInfo: PageInfo;
+  pageList: PlaceItem[];
+  region: Region;
+  "age-tag": null | AgeTag;
 }
 
 export interface HospitalInfo {
@@ -253,4 +292,10 @@ export interface PolicySearch {
   query: string | null;
   region: Region | {};
   "age-tag": AgeTag | {};
+}
+
+export interface PlaceSearch {
+  query: string | null;
+  region: Region | {};
+  maincate: MainCate | {};
 }

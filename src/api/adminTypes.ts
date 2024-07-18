@@ -1,4 +1,14 @@
-import { AgeTag, PageInfo, Region, User, File } from "./types";
+import { AgeTag, PageInfo, Region, User, File, OperateTime } from "./types";
+
+export interface Type {
+    id: string;
+    type: string
+}
+
+export interface Day {
+    id: string;
+    "operate-day": string
+}
 
 export interface PostBoard {
     id: number;
@@ -22,6 +32,24 @@ export interface BoardAdminInfo {
     "age-tag": null | AgeTag;
 }
 
+export interface HospitalAdminItem {
+    id: null | number;
+    name: string;
+    address: string;
+    "new-address": string;
+    phone: string;
+    type: string;
+    region: Region;
+    "operate-time": OperateTime[];
+}
+
+export interface HospitalAdminInfo {
+    pageInfo: PageInfo;
+    pageList: HospitalAdminItem[];
+    region: null | Region;
+    "age-tag": null | AgeTag;
+}
+
 export interface QnaAdminItem {
     id: number;
     title: string;
@@ -40,4 +68,19 @@ export interface QnaAdminInfo {
     'pageList': QnaAdminList[];
     region: null | Region;
     "age-tag": null | AgeTag;
+}
+
+export interface QnaAnswer {
+    id: number;
+    answer: string;
+}
+
+export interface ClassSubmitItem {
+    id: number | null;
+    name: string;
+    address: string;
+    'new-address': string;
+    phone: string;
+    region: Region;
+    "operate-time": OperateTime[];
   }

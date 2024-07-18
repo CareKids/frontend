@@ -133,7 +133,7 @@ export const checkAuthStatus = async() => {
 
 export const changePassword = async (email: string, password: string): Promise<any> => {
   try {
-    const response = await fetch(`${BASE_URL}/password-change`, {
+    const response = await fetch(`${BASE_URL}/api/password-change`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
