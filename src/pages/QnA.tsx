@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faPencilAlt, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faLock } from '@fortawesome/free-solid-svg-icons';
 import { useRecoilValue } from 'recoil';
 import { loginState } from '../atom';
 

@@ -100,12 +100,12 @@ const ChangePassword = () => {
         
         try {
             const result = await changePassword(fullEmail, password);
-            console.log('회원가입 성공:', result);
-            alert('회원가입이 완료되었습니다.');
+            console.log('비밀번호 변경 성공:', result);
+            alert('비밀번호 변경이 완료되었습니다.');
             navigate(-1);
         } catch (error) {
-            console.error('회원가입 실패:', error);
-            alert('회원가입 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            console.error('비밀번호 변경 실패:', error);
+            alert('비밀번호 변경 중 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     };
 

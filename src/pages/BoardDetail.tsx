@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Card, CardBody, Button, Spinner } from 'reactstrap';
+import { Container, Button, Spinner } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faList } from '@fortawesome/free-solid-svg-icons';
 
@@ -48,7 +48,7 @@ const BoardDetail: React.FC = () => {
       <Header />
       <Container className="mt-4">
         <h1 className="mb-2 mt-2"><strong>{post.title}</strong></h1>
-        <div>{new Date(post.createdAt[0], post.createdAt[1] - 1, post.createdAt[2]).toLocaleString()}</div>
+        <div>{new Date(post.createdAt[0], post.createdAt[1] - 1, post.createdAt[2]).toLocaleDateString()}</div>
         
         {post.img && (
           <div className="mt-4">

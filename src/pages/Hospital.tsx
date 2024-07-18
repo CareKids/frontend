@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Input, InputGroup, Card, CardBody, CardTitle, CardText, Row, Col, Container } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faFilter, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';

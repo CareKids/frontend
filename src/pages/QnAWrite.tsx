@@ -37,7 +37,6 @@ const QnAWrite: React.FC = () => {
 
     try {
       const response = await postQnAData(formData);
-      console.log('API 응답:', response);
       navigate('/qna');
     } catch (error) {
       console.error('API 오류:', error);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input, InputGroup, Row, Col, Container,  Popover, PopoverBody } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faFilter, faComments, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faFilter, faComments } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
