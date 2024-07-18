@@ -6,6 +6,7 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import Pagination from '../components/Pagination';
 
 import { getBoardData } from '../api/load';
 import { BoardInfo, BoardItem } from '../api/types';
@@ -75,31 +76,12 @@ const Board: React.FC = () => {
               ))}
             </tbody>
           </table>
-          
-          <nav aria-label="Page navigation" className="mt-4">
-            <ul className="pagination justify-content-center">
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </button>
-              </li>
-              {Array.from({ length: totalPages }).map((_, index) => (
-                <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                  <button 
-                    onClick={() => paginate(index + 1)} 
-                    className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
-                  >
-                    {index + 1}
-                  </button>
-                </li>
-              ))}
-              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </button>
-              </li>
-            </ul>
-          </nav>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            paginate={paginate}
+          />
         </div>
       </div>
       <Footer />

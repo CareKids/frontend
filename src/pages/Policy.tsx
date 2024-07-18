@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Input, InputGroup, Card, CardBody, CardTitle, CardText, Row, Col, Container } from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
+import { Button, Input, InputGroup, Row, Col, Container } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faFilter, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Pagination from '../components/Pagination';
+
 import { getPolicyData, filterPolicyData, getRegions, getAgeTags } from '../api/load';
 import { PolicyBoardInfo, PolicyItem, Region, AgeTag } from '../api/types';
-
-const formatTime = (time: number): string => {
-  return time.toString().padStart(2, '0');
-};
 
 const ITEMS_PER_PAGE = 12;
 const Policy: React.FC = () => {
@@ -223,30 +220,11 @@ const Policy: React.FC = () => {
           ))}
         </Row>
         
-        <nav aria-label="Page navigation" className="mt-4 bg-transparent">
-          <ul className="pagination justify-content-center">
-            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-              <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-            </li>
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                <button
-                  onClick={() => paginate(index + 1)}
-                  className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
-                >
-                  {index + 1}
-                </button>
-              </li>
-            ))}
-            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-              <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
-                <FontAwesomeIcon icon={faChevronRight} />
-              </button>
-            </li>
-          </ul>
-        </nav>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          paginate={paginate}
+        />
       </Container>
       <Footer />
     </div>    

@@ -5,6 +5,8 @@ import { faSearch, faFilter, faChevronLeft, faChevronRight } from '@fortawesome/
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Pagination from '../components/Pagination';
+
 import { getHospitalData, filterHospitalData, getRegions } from '../api/load';
 import { HospitalInfo, HospitalItem, Region } from '../api/types';
 
@@ -176,30 +178,11 @@ const Hospital: React.FC = () => {
           ))}
         </Row>
         
-        <nav aria-label="Page navigation" className="mt-4 bg-transparent">
-          <ul className="pagination justify-content-center">
-            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-              <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-            </li>
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                <button
-                  onClick={() => paginate(index + 1)}
-                  className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
-                >
-                  {index + 1}
-                </button>
-              </li>
-            ))}
-            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-              <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
-                <FontAwesomeIcon icon={faChevronRight} />
-              </button>
-            </li>
-          </ul>
-        </nav>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          paginate={paginate}
+        />
       </Container>
       <Footer />
     </div>    

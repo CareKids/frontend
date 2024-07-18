@@ -1,64 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input, InputGroup, Card, CardImg, CardBody, CardTitle, CardText, Row, Col, Container } from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faFilter, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { getPlaceData, filterPlaceData, getRegionAndCate } from '../api/load';
+import { PlaceInfo, Region, MainCate } from '../api/types';
+import Pagination from '../components/Pagination';
 
-interface SearchResult {
-  id: number;
-  category: string;
-  placeName: string;
-  address: string;
-  openingHours: string;
-  imageUrl: string;
-  tags: string[];
-}
-
+const ITEMS_PER_PAGE = 12;
 const SearchResult: React.FC = () => {
-  // filter 버튼 클릭 여부
+  const [placeInfo, setPlaceInfo] = useState<PlaceInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);  
+  const [maincates, setMaincate] = useState<MainCate[]>([]);
+  const [selectedMaincate, setSelectedMaincate] = useState<MainCate | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    fetchRegionsAndMainCate();
+    fetchInitialPlaceData();
+  }, []);
+
+  useEffect(() => {
+    searchAndFilter();
+  }, [selectedRegion, selectedMaincate]);
+
+  const fetchRegionsAndMainCate = async () => {
+    try {
+      const data = await getRegionAndCate();
+      setRegions(data.region);
+      setMaincate(data.categories);
+    } catch (err) {
+      console.error('Failed to fetch regions:', err);
+      setError('지역 정보를 불러오는 데 실패했습니다.');
+    }
+  };
+
+  const fetchInitialPlaceData = async () => {
+    setLoading(true);
+    try {
+      const data = await getPlaceData(currentPage, ITEMS_PER_PAGE);
+      setPlaceInfo(data);
+
+      if (!selectedRegion && data.region) {
+        setSelectedRegion(data.region);
+      }  
+    } catch (err) {
+      setError('장소 정보를 불러오는 데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
   
-  // 임시 데이터
-  const searchResults: SearchResult[] = [
-    {
-      id: 1,
-      category: '음식점',
-      placeName: '음식점 A',
-      address: '서울시 강남구 역삼동',
-      openingHours: '09:00 - 21:00',
-      imageUrl: 'https://via.placeholder.com/150?text=Restaurant',
-      tags: ['맛집', '한식'],
-    },
-    {
-      id: 2,
-      category: '카페',
-      placeName: '카페 B',
-      address: '서울시 강남구 신사동',
-      openingHours: '08:00 - 20:00',
-      imageUrl: 'https://via.placeholder.com/150?text=Cafe',
-      tags: ['커피', '디저트'],
-    },
-    {
-      id: 3,
-      category: '쇼핑',
-      placeName: '상점 C',
-      address: '서울시 강남구 청담동',
-      openingHours: '10:00 - 22:00',
-      imageUrl: 'https://via.placeholder.com/150?text=Shop',
-      tags: ['의류', '액세서리'],
-    },
-  ];
+  const searchAndFilter = async (page: number = currentPage) => {
+    if (!searchTerm && !selectedRegion) {
+      return fetchInitialPlaceData();
+    }
 
-  const handleSearch = () => {
-    // 검색하기 버튼 클릭 시 실행
+    setLoading(true);
+    try {
+      const data = await filterPlaceData(
+        { 
+          query: searchTerm || null, 
+          region: selectedRegion || {},
+          maincate: selectedMaincate || {}
+        }, 
+        page
+      );
+      setPlaceInfo(data);
+      setCurrentPage(page);
+    } catch (err) {
+      setError('검색에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSearchAndFilter = () => {
+    searchAndFilter(1);
+  };
+
+  const handleRegionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const regionId = Number(event.target.value);
+    const selectedRegion = regions.find(region => region.id === regionId) || null;
+    setSelectedRegion(selectedRegion);
+  };
+
+  const handleMaincateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const cateId = Number(event.target.value);
+    const selectedMaincate = maincates.find(cate => cate.id === cateId) || null;
+    setSelectedMaincate(selectedMaincate);
+  };
+
+  const paginate = (pageNumber: number) => {
+    searchAndFilter(pageNumber);
+  };
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!placeInfo) return <div>No data available</div>;
+
+  const totalPages = placeInfo.pageInfo.total;
 
   return (
     <div className='App'>
@@ -66,113 +119,107 @@ const SearchResult: React.FC = () => {
       <Container className="mt-4">
         <h1 className="mb-4"><b>장소</b></h1>
 
-        {/* 검색창 */}
         <div className="bg-white rounded-4 p-3 mb-4">
           <InputGroup>
-            <Input placeholder="검색어 입력" className="border-1" />
+            <Input 
+              placeholder="검색어 입력" 
+              className="border-1" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <Button color="primary" className="me-2" onClick={toggleFilters}>
               <FontAwesomeIcon icon={faFilter} className="me-2 rounded-4" />
               필터
             </Button>
-            <Button color="primary" onClick={handleSearch}>
+            <Button color="primary" onClick={handleSearchAndFilter}>
               <FontAwesomeIcon icon={faSearch} className="me-2 rounded-4" />
               검색하기
             </Button>
           </InputGroup>
         </div>
 
-        {/* 필터 */}
         {showFilters && (
           <div className="bg-light p-3 mb-4 rounded">
             <Row>
               <Col md={6}>
-                <Input type="select" className="mb-2">
-                  <option>카테고리 선택</option>
-                  {/* TODO: 카테고리 옵션 불러오기 */}
+                <Input 
+                  type="select" 
+                  value={selectedRegion?.id || ''} 
+                  onChange={handleRegionChange}
+                >
+                  {regions.map((region) => (
+                    <option key={region.id} value={region.id}>{region.name}</option>
+                  ))}
                 </Input>
               </Col>
               <Col md={6}>
-                <Input type="select">
-                  <option>위치 선택</option>
-                  {/* TODO: 지역 목록 불러오기 */}
+                <Input 
+                  type="select" 
+                  value={selectedMaincate?.id || ''} 
+                  onChange={handleMaincateChange}
+                >
+                  {maincates.map((cate) => (
+                    <option key={cate.id} value={cate.id}>{cate.name}</option>
+                  ))}
                 </Input>
               </Col>
             </Row>
           </div>
         )}
-
-        <div className="mb-3">
-          <div>검색 결과 {searchResults.length}건</div>
-        </div>
         
-        {/* 장소 목록 리스트 */}
-        <Row>
-          {searchResults.map((result, index) => (
-            <Col md={4} key={index} className="mb-4">
-              <Card className="h-100">
-                <Link to={`/place/${result.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <CardBody>
-                    <Row>
-                      <Col xs={8}>
-                        <Button color="secondary" size="sm" className="mb-2" disabled>{result.category}</Button>
-                        <CardTitle tag="h5" className="mb-2"><strong>{result.placeName}</strong></CardTitle>
-                        <CardText>
-                          <strong>주소 · </strong> {result.address}<br />
-                          <strong>운영시간 · </strong> {result.openingHours}
-                        </CardText>
-                      </Col>
-                      <Col xs={4}>
-                        <CardImg src={result.imageUrl} alt={result.placeName} className="img-fluid rounded" style={{height: '100%', objectFit: 'cover'}} />
-                      </Col>
-                    </Row>
-                    <div className="mt-3">
-                      {result.tags.map((tag, tagIndex) => (
-                        <Button
-                          key={tagIndex}
-                          color="primary"
-                          outline
-                          size="sm"
-                          className="me-2 mb-2 rounded-pill"
-                          style={{ fontSize: '0.8rem', pointerEvents: 'none' }}
-                        >
-                          {tag}
-                        </Button>
-                      ))}
-                    </div>
-                  </CardBody>
-                </Link>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        {placeInfo && placeInfo.pageList && placeInfo.pageList.length > 0 ? (
+          <Row>
+            {placeInfo.pageList.map((result, index) => (
+              <Col md={4} key={index} className="mb-4">
+                <Card className="h-100">
+                  <Link to={`/place/${result.placeId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <CardBody>
+                      <Row>
+                        <Col xs={8}>
+                          <Button color="secondary" size="sm" className="mb-2" disabled>{result.placeMaincate.name}</Button>
+                          <CardTitle tag="h5" className="mb-2"><strong>{result.placeName}</strong></CardTitle>
+                          <CardText>
+                            <strong>주소 · </strong> {result.placeNewAddress}<br />
+                            <strong>운영시간 · </strong> {result.placeOperateTime}
+                          </CardText>
+                        </Col>
+                        <Col xs={4}>
+                          <CardImg src={result.placeImgUrl} alt={result.placeName} className="img-fluid rounded" style={{height: '100%', maxHeight: '200px', objectFit: 'cover'}} />
+                        </Col>
+                      </Row>
+                      <div className="mt-3">
+                        {result.placeKeywords && result.placeKeywords.length > 0 ? (
+                          result.placeKeywords.map((tag, tagIndex) => (
+                            <Button
+                              key={tagIndex}
+                              color="primary"
+                              outline
+                              size="sm"
+                              className="me-2 mb-2 rounded-pill"
+                              style={{ fontSize: '0.8rem', pointerEvents: 'none' }}
+                            >
+                              {tag.keywordName}
+                            </Button>
+                          ))
+                        ) : (
+                          <div></div>
+                        )}
+                      </div>
+                    </CardBody>
+                  </Link>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <p>결과가 없습니다.</p>
+        )}
         
-        {/* TODO: Paginateion */}
-        {/* <div className="d-flex justify-content-center">
-          <Pagination>
-              <PaginationItem>
-              <PaginationLink first href="#" />
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink previous href="#" />
-              </PaginationItem>
-              <PaginationItem active>
-              <PaginationLink href="#">
-                  1
-              </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink href="#">
-                  2
-              </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink next href="#" />
-              </PaginationItem>
-              <PaginationItem>
-              <PaginationLink last href="#" />
-              </PaginationItem>
-          </Pagination>
-        </div> */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          paginate={paginate}
+        />
       </Container>
       <Footer />
     </div>    
