@@ -1,43 +1,90 @@
-import React, { useState } from 'react';
-import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useReactTable, getCoreRowModel, flexRender, createColumnHelper, CellContext } from '@tanstack/react-table';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Alert } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../../components/admin/Header'
 import Footer from '../../components/Footer'
 
-type Post = {
-    id: number;
-    title: string;
-    image: string;
-    description: string;
-    createdAt: string;
-};
+import { getBoardAdminData, postBoardAdminData, deleteBoardAdminData } from '../../api/admin';
+import { BoardAdminInfo, BoardAdminItem } from '../../api/adminTypes';
 
-function Place() {
-    const [data, setData] = useState<Post[]>([
-        { id: 1, title: '공지사항1', image: '/api/placeholder/50/50', description: '공지사항\n입니다.', createdAt: '2024-06-28' },
-        { id: 2, title: '공지사항2', image: '/api/placeholder/50/50', description: '공지사항\n입니다.', createdAt: '2024-06-28' },
-    ]);
+const ITEMS_PER_PAGE = 12;
+const Board: React.FC = () => {
+    const [boardInfo, setBoardInfo] = useState<BoardAdminInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [modal, setModal] = useState(false);
-    const [editModal, setEditModal] = useState(false);
-    const [currentPost, setCurrentPost] = useState<Post | null>(null);
-    const [newPost, setNewPost] = useState<Partial<Post>>({});
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentPost, setCurrentPost] = useState<Partial<BoardAdminItem>>({});
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [fileError, setFileError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    const handleEdit = (post: Post) => {
-        setCurrentPost(post);
-        setEditModal(true);
-    };
+    useEffect(() => {
+        fetchInitialBoardData();
+    }, []);
+
     
-    const openImageInNewTab = (imageUrl: string) => {
-        window.open(imageUrl, '_blank');
+    useEffect(() => {
+        fetchInitialBoardData();
+    }, [currentPage]);
+
+    const handleEdit = (post: BoardAdminItem) => {
+        setCurrentPost(post);
+        setIsEditing(true);
+        setModal(true);
     };
 
-    const columnHelper = createColumnHelper<Post>();
-    const columns = [
+    const openImageInNewTab = useCallback((imageUrl: string) => {
+        window.open(imageUrl, '_blank');
+    }, []);
+
+    const ImageCell = useCallback(({ getValue }: CellContext<BoardAdminItem, string>) => {
+        const value = getValue();
+        return (
+            <img 
+                src={value} 
+                alt="이미지" 
+                style={{ width: '50px', height: '50px', cursor: 'pointer' }} 
+                onClick={() => openImageInNewTab(value)}
+            />
+        );
+    }, [openImageInNewTab]);
+
+    const handleDelete = async (id: number) => {
+        setDeleteId(id);
+        setDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            try {
+                await deleteBoardAdminData(deleteId);
+                fetchInitialBoardData();
+                setDeleteModal(false);
+            } catch (error) {
+                console.error('삭제 중 오류 발생:', error);
+            }
+        }
+    };
+
+    const ActionCell = useCallback(({ row }: { row: any }) => (
+        <div>
+            <Button color="link" className="mr-3" onClick={() => handleEdit(row.original)}>
+                <FontAwesomeIcon icon={faEdit} />
+            </Button>
+            <Button color="link" onClick={() => handleDelete(row.original.id)}>
+                <FontAwesomeIcon icon={faTrash} />
+            </Button>
+        </div>
+    ), [handleEdit, handleDelete]);
+    
+    const columnHelper = createColumnHelper<BoardAdminItem>();
+    const columns = useMemo(() => [
         columnHelper.accessor('id', {
             header: '번호',
             cell: info => info.getValue(),
@@ -46,47 +93,59 @@ function Place() {
             header: '제목',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('image', {
+        columnHelper.accessor('img', {
             header: '첨부 이미지',
-            cell: info => (
-                <img 
-                    src={info.getValue()} 
-                    alt="이미지" 
-                    style={{ width: '50px', height: '50px', cursor: 'pointer' }} 
-                    onClick={() => openImageInNewTab(info.getValue())}
-                />
-            ),
+            cell: ImageCell,
         }),
         columnHelper.accessor('createdAt', {
             header: '등록 일자',
-            cell: info => info.getValue(),
+            cell: info => {
+                const dateArray = info.getValue();
+                if (Array.isArray(dateArray) && dateArray.length >= 3) {
+                    const date = new Date(dateArray[0], dateArray[1] - 1, dateArray[2]);
+                    return date.toLocaleDateString();
+                }
+                return 'Invalid Date';
+            },
         }),
         columnHelper.display({
             id: 'actions',
             header: '수정/삭제',
-            cell: (info) => (
-                <div>
-                    <Button color="link" className="mr-3" onClick={() => handleEdit(info.row.original)}>
-                        <FontAwesomeIcon icon={faEdit} />
-                    </Button>
-                    <Button color="link" onClick={() => console.log('삭제')}>
-                        <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                </div>
-            ),
+            cell: ActionCell,
         }),
-    ];
+    ], [ImageCell, ActionCell]);
 
     const table = useReactTable({
-        data,
+        data: boardInfo?.pageList ?? [],
         columns,
         getCoreRowModel: getCoreRowModel(),
     });
 
+    const fetchInitialBoardData = async () => {
+        setLoading(true);
+        try {
+            const data = await getBoardAdminData(currentPage, ITEMS_PER_PAGE);
+            setBoardInfo(data);
+        } catch (err) {
+            setError('공지사항 정보를 불러오는 데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const paginate = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+      };
+  
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>{error}</div>;
+    if (!boardInfo) return <div>No data available</div>;
+  
+    const totalPages = boardInfo.pageInfo.total;
+
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // 파일 타입 검증
             const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
             if (!validTypes.includes(file.type)) {
                 setFileError('올바른 이미지 파일을 선택해주세요 (JPG, PNG, GIF)');
@@ -104,37 +163,43 @@ function Place() {
     };
 
     const resetModal = () => {
-        setNewPost({});
+        setCurrentPost({});
         setPreviewImage(null);
         setFileError(null);
-        setCurrentPost(null);
+        setIsEditing(false);
     };
 
     const toggle = () => {
         setModal(!modal);
-        if (modal) {
+        if (!modal) {
             resetModal();
         }
     };
 
-    const toggleEdit = () => {
-        setEditModal(!editModal);
-        if (editModal) {
-            resetModal();
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        const formData = new FormData();
+    
+        const blob = new Blob([JSON.stringify({
+            id: isEditing ? currentPost.id : null,
+            title: currentPost.title,
+            description: currentPost.description
+        })], {type: 'application/json'})
+        formData.append('data', blob, 'data.json')
+    
+        if (previewImage) {
+            const response = await fetch(previewImage);
+            const blob = await response.blob();
+            formData.append('files', blob, 'image.jpg');
         }
-    };
-
-    const handleSubmit = () => {
-        if (newPost.title ) {
-            setData([...data, { ...newPost, id: data.length + 1, createdAt: new Date().toISOString().split('T')[0], image: previewImage || '/api/placeholder/50/50' } as Post]);
+    
+        try {
+            const response = await postBoardAdminData(formData);
+            fetchInitialBoardData();
             toggle();
-        }
-    };
-
-    const handleUpdate = () => {
-        if (currentPost) {
-            setData(data.map(post => post.id === currentPost.id ? { ...currentPost, ...newPost, image: previewImage || currentPost.image } : post));
-            toggleEdit();
+        } catch (error) {
+            console.error('API 오류:', error);
         }
     };
 
@@ -178,9 +243,8 @@ function Place() {
                 </div>
             </div>
 
-             {/* 게시글 등록 모달 */}
-             <Modal isOpen={modal} toggle={toggle}>
-                <ModalHeader toggle={toggle}>게시글 등록</ModalHeader>
+            <Modal isOpen={modal} toggle={toggle}>
+                <ModalHeader toggle={toggle}>{isEditing ? '게시글 수정' : '게시글 등록'}</ModalHeader>
                 <ModalBody>
                     <Form>
                         <FormGroup>
@@ -189,8 +253,8 @@ function Place() {
                                 type="text" 
                                 name="title" 
                                 id="title" 
-                                value={newPost.title || ''}
-                                onChange={(e) => setNewPost({...newPost, title: e.target.value})} 
+                                value={currentPost.title || ''}
+                                onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} 
                             />
                         </FormGroup>
                         <FormGroup>
@@ -210,88 +274,74 @@ function Place() {
                                     style={{ width: '100px', marginTop: '10px', cursor: 'pointer' }} 
                                     onClick={() => openImageInNewTab(previewImage)}
                                 />
-                            ) : currentPost?.image && (
+                            ) : currentPost.img && (
                                 <img 
-                                    src={currentPost.image} 
+                                    src={currentPost.img} 
                                     alt="Current" 
-                                    style={{ width: '100px', marginTop: '10px', cursor: 'pointer' }} 
-                                    onClick={() => openImageInNewTab(currentPost.image)}
+                                    style={{ width: '100px', marginTop: '10px', cursor: 'pointer' }}
                                 />
                             )}
                         </FormGroup>
                         <FormGroup>
-                            <Label for="description"></Label>
+                            <Label for="description">내용</Label>
                             <Input 
                                 type="textarea" 
                                 name="description" 
                                 id="description" 
-                                value={newPost.description || ''}
-                                onChange={(e) => setNewPost({...newPost, description: e.target.value})}
+                                value={currentPost.description || ''}
+                                onChange={(e) => setCurrentPost({...currentPost, description: e.target.value})}
                                 style={{ height: '300px', resize: 'none'  }}
-                            >
-                            </Input>
+                            />
                         </FormGroup>
                     </Form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleSubmit} disabled={!!fileError || !newPost.title || !newPost.description}>등록</Button>{' '}
+                    <Button color="primary" onClick={handleSubmit} disabled={!!fileError || !currentPost.title || !currentPost.description}>
+                        {isEditing ? '수정' : '등록'}
+                    </Button>{' '}
                     <Button color="secondary" onClick={toggle}>취소</Button>
                 </ModalFooter>
             </Modal>
 
-            {/* 게시글 수정 모달 */}
-            <Modal isOpen={editModal} toggle={toggleEdit}>
-                <ModalHeader toggle={toggleEdit}>게시글 수정</ModalHeader>
+            
+            <Modal isOpen={deleteModal} toggle={() => setDeleteModal(false)}>
+                <ModalHeader toggle={() => setDeleteModal(false)}>삭제 확인</ModalHeader>
                 <ModalBody>
-                    <Form>
-                        <FormGroup>
-                            <Label for="title">제목</Label>
-                            <Input 
-                                type="text" 
-                                name="title" 
-                                id="title" 
-                                value={newPost.title || currentPost?.title || ''}
-                                onChange={(e) => setNewPost({...newPost, title: e.target.value})} 
-                            />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="image">첨부 이미지</Label>
-                            <Input 
-                                type="file" 
-                                name="image" 
-                                id="image" 
-                                onChange={handleImageChange}
-                                accept="image/jpeg, image/png, image/gif"
-                            />
-                            {fileError && <Alert color="danger">{fileError}</Alert>}
-                            {previewImage ? 
-                                <img src={previewImage} alt="Preview" style={{ width: '100px', marginTop: '10px' }} /> :
-                                currentPost?.image && <img src={currentPost.image} alt="Current" style={{ width: '100px', marginTop: '10px' }} />
-                            }
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="description"></Label>
-                            <Input 
-                                type="textarea" 
-                                name="description" 
-                                id="description" 
-                                value={newPost.description || currentPost?.description || ''}
-                                onChange={(e) => setNewPost({...newPost, description: e.target.value})}
-                                style={{ height: '300px', resize: 'none'  }}
-                            >
-                            </Input>
-                        </FormGroup>
-                    </Form>
+                    정말로 이 게시글을 삭제하시겠습니까?
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleUpdate} disabled={!!fileError}>수정</Button>{' '}
-                    <Button color="secondary" onClick={toggleEdit}>취소</Button>
+                    <Button color="danger" onClick={confirmDelete}>삭제</Button>{' '}
+                    <Button color="secondary" onClick={() => setDeleteModal(false)}>취소</Button>
                 </ModalFooter>
             </Modal>
-
+        
+            <nav aria-label="Page navigation" className="mt-4 bg-transparent">
+            <ul className="pagination justify-content-center">
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                </button>
+                </li>
+                {Array.from({ length: totalPages }).map((_, index) => (
+                <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                    <button
+                    onClick={() => paginate(index + 1)}
+                    className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
+                    >
+                    {index + 1}
+                    </button>
+                </li>
+                ))}
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
+                    <FontAwesomeIcon icon={faChevronRight} />
+                </button>
+                </li>
+            </ul>
+            </nav>
             <Footer />
         </div>
     );
 }
 
-export default Place;
+export default Board;
