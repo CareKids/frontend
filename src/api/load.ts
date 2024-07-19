@@ -1,4 +1,5 @@
 import { HomeInfo, SignInInfo, BoardInfo, BoardDetail, Region, AgeTag, UserInfo, HospitalInfo, HospitalSearch, ClassInfo, PlayBoardInfo, PlaySearch, DetailPlayItem, PolicyBoardInfo, PolicySearch, DetailPolicyItem, QnAInfo, DetailQnaInfo, ApiError, RegionMaincate, PlaceSearch, PlaceInfo } from './types';
+import { PlaceAdminItem } from './adminTypes';
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -167,6 +168,29 @@ export const filterPlaceData = async (params: PlaceSearch, page: number): Promis
     return await response.json();
   } catch (error) {
     console.error('Error searching and filtering places:', error);
+    throw error;
+  }
+};
+
+export const getPlaceDetailData = async (id: string): Promise<PlaceAdminItem> => {
+  try {
+    const response = await fetch(`${BASE_URL}/place/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: PlaceAdminItem = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching place info:', error);
     throw error;
   }
 };

@@ -15,7 +15,7 @@ export interface OperateTime {
   "operation-day": string;
 }
 
-interface DevDomain {
+export interface DevDomain {
   devDomainId: number;
   devDomainType: string;
 }
@@ -36,7 +36,7 @@ export interface ApiError {
   message: string;
 }
 
-interface SubCate {
+export interface SubCate {
   placeSubcateId: number;
   placeSubcateName: string;
 }
@@ -46,7 +46,7 @@ export interface MainCate {
   name: string
 }
 
-interface Keyword {
+export interface Keyword {
   keywordId: number;
   keywordName: string;
 }
@@ -242,7 +242,7 @@ export interface BoardDetail {
 }
 
 export interface DetailPlayItem {
-  id: number;
+  id: number | null;
   title: string;
   text: string;
   tools: string;

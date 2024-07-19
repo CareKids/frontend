@@ -1,5 +1,5 @@
-import { BoardAdminInfo, QnaAdminInfo, QnaAnswer, HospitalAdminInfo, Day, Type, HospitalAdminItem, ClassSubmitItem } from "./adminTypes";
-import { ClassInfo, ClassItem } from "./types";
+import { BoardAdminInfo, QnaAdminInfo, QnaAnswer, HospitalAdminInfo, Day, Type, HospitalAdminItem, ClassSubmitItem, PlaceAdminInfo, PlaceAdminItem, PlayAdminInfo, PolicyAdminInfo, PolicySubmit, PolicyType } from "./adminTypes";
+import { ClassInfo, DetailPlayItem, DevDomain } from "./types";
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -88,14 +88,14 @@ export const getQnaAdminData = async (page: number, size: number): Promise<QnaAd
   }
 };
 
-export const postQnaAdminData = async (params: QnaAnswer) => {
+export const postQnaAdminData = async (item: QnaAnswer) => {
   try {
     const response = await fetch(`${BASE_URL}/admin/question/edit-answer`, {
       method: 'POST',
-      body: JSON.stringify({
-        id: params.id,
-        answer: params.answer
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(item),
       credentials: 'include',
     });
 
@@ -103,7 +103,7 @@ export const postQnaAdminData = async (params: QnaAnswer) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response;
     return data;
   } catch (error) {
     console.error('Error posting admin qna answer:', error);
@@ -273,6 +273,237 @@ export const deleteClassAdminData = async (id: number) => {
     return data;
   } catch (error) {
     console.error('Error deleteing admin class data:', error);
+    throw error;
+  }
+};
+
+export const getPlaceAdminData = async (page: number, size: number): Promise<PlaceAdminInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/place?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: PlaceAdminInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching admin place info:', error);
+    throw error;
+  }
+};
+
+export const postPlaceAdminData = async (item: PlaceAdminItem) => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/place/edit`, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(item),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error posting admin place data:', error);
+    throw error;
+  }
+};
+
+export const deletePlaceAdminData = async (id: number) => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/place/delete/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error deleteing admin place data:', error);
+    throw error;
+  }
+};
+
+export const getPlayAdminData = async (page: number, size: number): Promise<PlayAdminInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/playinfo?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: PlayAdminInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching admin play info:', error);
+    throw error;
+  }
+};
+
+export const postPlayAdminData = async (item: DetailPlayItem) => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/playinfo/edit`, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(item),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error posting admin play data:', error);
+    throw error;
+  }
+};
+
+export const deletePlayAdminData = async (id: number) => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/playinfo/delete/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error deleteing admin play data:', error);
+    throw error;
+  }
+};
+
+export const getPolicyAdminData = async (page: number, size: number): Promise<PolicyAdminInfo> => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/kids-policy?page=${page}&size=${size}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: PolicyAdminInfo = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching admin policy info:', error);
+    throw error;
+  }
+};
+
+export const postPolicyAdminData = async (item: PolicySubmit) => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/kids-policy/edit`, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(item),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error posting admin policy data:', error);
+    throw error;
+  }
+};
+
+export const deletePolicyAdminData = async (id: number) => {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/kids-policy/delete/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error deleteing admin policy data:', error);
+    throw error;
+  }
+};
+
+export const getPolicyType = async (): Promise<PolicyType[]> => {
+  try {
+    const response = await fetch(`${BASE_URL}/kidsPolicy-type`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+    });
+
+    const data: PolicyType[] = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching policy types:', error);
+    throw error;
+  }
+};
+
+export const getDevDomains = async (): Promise<DevDomain[]> => {
+  try {
+    const response = await fetch(`${BASE_URL}/dev-domain`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+    });
+
+    const data: DevDomain[] = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching policy types:', error);
     throw error;
   }
 };
