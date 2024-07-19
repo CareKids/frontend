@@ -8,6 +8,7 @@ import AdminClass from './admin/Class'
 import AdminHospital from './admin/Hospital'
 import AdminPlay from './admin/Play'
 import AdminBoard from './admin/Board'
+import AdminPolicy from './admin/Policy'
 
 // 일반 페이지
 import Signin from './Signin'
@@ -41,7 +42,7 @@ const AuthenticatedAdminClassPage = Auth(AdminClass, 'admin');
 const AuthenticatedAdminHospitalPage = Auth(AdminHospital, 'admin');
 const AuthenticatedAdminPlayPage = Auth(AdminPlay, 'admin');
 const AuthenticatedAdminBoardPage = Auth(AdminBoard, 'admin');
-// const AuthenticatedAdminPage = Auth(Admin, 'admin');
+const AuthenticatedAdminPolicyPage = Auth(AdminPolicy, 'admin');
 
 const AppRouter = () => {
     return (
@@ -53,7 +54,7 @@ const AppRouter = () => {
                 <Route path="/admin/hospital" element={<AuthenticatedAdminHospitalPage />} />
                 <Route path="/admin/class" element={<AuthenticatedAdminClassPage />} />
                 <Route path="/admin/play" element={<AuthenticatedAdminPlayPage />} />
-                {/* <Route path="/admin/policy" element={<AuthenticatedAdminPage />} /> */}
+                <Route path="/admin/policy" element={<AuthenticatedAdminPolicyPage />} />
                 <Route path="/admin/board" element={<AuthenticatedAdminBoardPage />} />
                 <Route path="/admin/qna" element={<AuthenticatedAdminQnAPage />} />
 

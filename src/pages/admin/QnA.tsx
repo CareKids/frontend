@@ -1,67 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faReply } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../../components/admin/Header'
 import Footer from '../../components/Footer'
+import Pagination from '../../components/Pagination';
 
-type QnA = {
-    id: number;
-    title: string;
-    content: string;
-    attachment: string | null;
-    createdAt: string;
-    answer: string | null;
-    answeredAt: string | null;
-};
+import { getQnaAdminData, postQnaAdminData } from '../../api/admin';
+import { QnaAdminInfo, QnaAnswer, QnaAdminList } from '../../api/adminTypes';
 
-const columnHelper = createColumnHelper<QnA>();
+const ITEMS_PER_PAGE = 12;
 
-function QnAManagement() {
-    const [data, setData] = useState<QnA[]>([
-        { id: 1, title: '영업시간 문의', content: '주말 영업 시간이 어떻게 되나요?', attachment: null, createdAt: '2024-06-28', answer: null, answeredAt: null },
-        { id: 2, title: '주차 가능 여부', content: '주차장이 있나요?', attachment: '/api/placeholder/50/50', createdAt: '2024-06-29', answer: '네, 주차장이 있습니다.', answeredAt: '2024-06-30' },
-    ]);
+const QnA: React.FC = () => {
+    const [qnaInfo, setQnaInfo] = useState<QnaAdminInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [modal, setModal] = useState(false);
     const [answerModal, setAnswerModal] = useState(false);
-    const [currentQnA, setCurrentQnA] = useState<QnA | null>(null);
+    const [currentPost, setCurrentPost] = useState<QnaAdminList | null>(null);
     const [answer, setAnswer] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const handleViewContent = (qna: QnA) => {
-        setCurrentQnA(qna);
+    useEffect(() => {
+        fetchInitialQnaData();
+    }, [currentPage]);
+
+    const fetchInitialQnaData = async () => {
+        setLoading(true);
+        try {
+            const data = await getQnaAdminData(currentPage, ITEMS_PER_PAGE);
+            setQnaInfo(data);
+        } catch (err) {
+            setError('문의 사항 정보를 불러오는 데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleViewContent = (qna: QnaAdminList) => {
+        setCurrentPost(qna);
         setModal(true);
     };
 
-    const handleAnswer = (qna: QnA) => {
-        setCurrentQnA(qna);
+    const handleAnswer = (qna: QnaAdminList) => {
+        setCurrentPost(qna);
         setAnswer('');
         setAnswerModal(true);
     };
 
-    const columns = [
-        columnHelper.accessor('id', {
+    const formatDate = (dateArr: number[] | null): string => {
+        if (!dateArr || dateArr.length < 3) return '-';
+        const [year, month, day] = dateArr;
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    };
+
+    const columnHelper = createColumnHelper<QnaAdminList>();
+    const columns = useMemo(() => [
+        columnHelper.accessor(row => row.data.id, {
+            id: 'id',
             header: '번호',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('title', {
+        columnHelper.accessor(row => row.data.title, {
+            id: 'title',
             header: '게시글 제목',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('createdAt', {
+        columnHelper.accessor(row => row.data.createdAt, {
+            id: 'createAt',
             header: '등록 일자',
-            cell: info => info.getValue(),
-        }),
-        columnHelper.accessor('answeredAt', {
-            header: '처리 일자',
-            cell: info => info.getValue() || '-',
+            cell: info => formatDate(info.getValue()),
         }),
         columnHelper.display({
             id: 'actions',
             header: '답변',
             cell: (info) => (
-                info.row.original.answer ? (
+                info.row.original.data.answer ? (
                     <Button 
                         color="secondary" 
                         onClick={() => handleViewContent(info.row.original)}
@@ -78,10 +94,10 @@ function QnAManagement() {
                 )
             ),
         }),
-    ];
+    ], []);
 
     const table = useReactTable({
-        data,
+        data: qnaInfo?.pageList ?? [],
         columns,
         getCoreRowModel: getCoreRowModel(),
     });
@@ -89,25 +105,43 @@ function QnAManagement() {
     const toggleModal = () => {
         setModal(!modal);
         if (modal) {
-            setCurrentQnA(null);
+            setCurrentPost(null);
         }
     };
 
     const toggleAnswerModal = () => {
         setAnswerModal(!answerModal);
         if (answerModal) {
-            setCurrentQnA(null);
+            setCurrentPost(null);
             setAnswer('');
         }
     };
 
-    const handleSubmit = () => {
-        if (currentQnA && answer) {
-            const now = new Date().toISOString().split('T')[0];
-            setData(data.map(qna => qna.id === currentQnA.id ? { ...qna, answer: answer, answeredAt: now } : qna));
-            toggleAnswerModal();
+    const handleSubmit = async () => {
+        if (currentPost && answer) {
+            try {
+                const qnaAnswer: QnaAnswer = {
+                    id: currentPost.data.id,
+                    answer: answer
+                };
+                await postQnaAdminData(qnaAnswer);
+                await fetchInitialQnaData();
+                toggleAnswerModal();
+                console.log('답변이 성공적으로 등록되었습니다.');
+            } catch (error) {
+                console.error('답변 등록 중 오류 발생:', error);
+                setError('답변 등록에 실패했습니다: ' + (error instanceof Error ? error.message : String(error)));
+            }
         }
     };
+
+    const paginate = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+    };
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>{error}</div>;
+    if (!qnaInfo) return <div>No data available</div>;
 
     return (
         <div className="App">
@@ -144,27 +178,34 @@ function QnAManagement() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={qnaInfo.pageInfo.total}
+                    paginate={paginate}
+                />
             </div>
 
             {/* 내용 보기 모달 */}
             <Modal isOpen={modal} toggle={toggleModal} size="lg">
                 <ModalHeader toggle={toggleModal}>문의 내용 및 답변</ModalHeader>
                 <ModalBody>
-                    {currentQnA && (
+                    {currentPost && (
                         <>
-                            <h5>{currentQnA.title}</h5>
-                            <p>{currentQnA.content}</p>
-                            {currentQnA.attachment && (
+                            <h5>{currentPost.data.title}</h5>
+                            <p>{currentPost.data.text}</p>
+                            {currentPost.files && currentPost.files.length > 0 && (
                                 <div>
                                     <strong>첨부파일: </strong>
-                                    <img src={currentQnA.attachment} alt="첨부파일" style={{ maxWidth: '100%', marginTop: '10px' }} />
+                                    {currentPost.files.map((file, index) => (
+                                        <img key={index} src={file['file-path']} alt={`첨부파일 ${index + 1}`} style={{ maxWidth: '100%', marginTop: '10px' }} />
+                                    ))}
                                 </div>
                             )}
                             <hr />
                             <div>
                                 <strong>등록 답변:</strong>
-                                <p>{currentQnA.answer}</p>
-                                <p><small>처리 일자: {currentQnA.answeredAt}</small></p>
+                                <p>{currentPost.data.answer}</p>
                             </div>
                         </>
                     )}
@@ -178,28 +219,36 @@ function QnAManagement() {
             <Modal isOpen={answerModal} toggle={toggleAnswerModal} size="lg">
                 <ModalHeader toggle={toggleAnswerModal}>답변 등록</ModalHeader>
                 <ModalBody>
-                    {currentQnA && (
-                        <>
-                            <h5>{currentQnA.title}</h5>
-                            <p>{currentQnA.content}</p>
-                            {currentQnA.attachment && (
-                                <div>
-                                    <strong>첨부파일: </strong>
-                                    <img src={currentQnA.attachment} alt="첨부파일" style={{ maxWidth: '100%', marginTop: '10px' }} />
-                                </div>
+                    {currentPost && (
+                        <Form>
+                            <FormGroup>
+                                <Label for="title">제목</Label>
+                                <Input type="text" name="title" id="title" value={currentPost.data.title} disabled />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label for="content">내용</Label>
+                                <Input type="textarea" name="content" id="content" value={currentPost.data.text} disabled />
+                            </FormGroup>
+                            {currentPost.files && currentPost.files.length > 0 && (
+                                <FormGroup>
+                                    <Label>첨부파일</Label>
+                                    {currentPost.files.map((file, index) => (
+                                        <img key={index} src={file['file-path']} alt={`첨부파일 ${index + 1}`} style={{ maxWidth: '100%', marginTop: '10px' }} />
+                                    ))}
+                                </FormGroup>
                             )}
-                            <hr />
-                            <div className="form-group">
-                                <label htmlFor="answer"><strong>답변:</strong></label>
-                                <textarea 
-                                    className="form-control" 
+                            <FormGroup>
+                                <Label for="answer">답변</Label>
+                                <Input 
+                                    type="textarea" 
+                                    name="answer" 
                                     id="answer" 
-                                    rows={5} 
                                     value={answer}
                                     onChange={(e) => setAnswer(e.target.value)}
-                                ></textarea>
-                            </div>
-                        </>
+                                    rows={5}
+                                />
+                            </FormGroup>
+                        </Form>
                     )}
                 </ModalBody>
                 <ModalFooter>
@@ -213,4 +262,4 @@ function QnAManagement() {
     );
 }
 
-export default QnAManagement;
+export default QnA;

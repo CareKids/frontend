@@ -1,90 +1,168 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Alert } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../../components/admin/Header'
 import Footer from '../../components/Footer'
+import Pagination from '../../components/Pagination';
 
-type Post = {
-    id: number;
-    age: string;
-    playName: string;
-    category: string;
-    useTools: string;
-    place: string;
-    description: string;
-    createdAt: string;
-};
+import { getPlayAdminData, postPlayAdminData, deletePlayAdminData, getDevDomains } from '../../api/admin';
+import { getAgeTags } from '../../api/load';
+import { PlayAdminInfo } from '../../api/adminTypes';
+import { AgeTag, DetailPlayItem, DevDomain } from '../../api/types';
 
-function Play() {
-    const [data, setData] = useState<Post[]>([
-        { id: 1, age: '24개월 미만', playName: '공놀이', category: '신체 발달', useTools: '공', place: '야외', description: '공차기를 하면서\n재미있게 놀 수 있습니다.', createdAt: '2024-06-28' },
-        { id: 2, age: '5살', playName: '종이접기', category: '손재주', useTools: '종이, 풀', place: '실내', description: '여러가지 종이접기를\n해 봅시다.', createdAt: '2024-06-28' },
-    ]);
+const ITEMS_PER_PAGE = 12;
+const Play: React.FC = () => {
+    const [playInfo, setPlayInfo] = useState<PlayAdminInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [modal, setModal] = useState(false);
-    const [editModal, setEditModal] = useState(false);
-    const [currentPost, setCurrentPost] = useState<Post | null>(null);
-    const [newPost, setNewPost] = useState<Partial<Post>>({});
+    const [isEditing, setIsEditing] = useState(false);
+    const [ages, setAges] = useState<AgeTag[]>([]);
+    const [devDomains, setDevDomains] = useState<DevDomain[]>([]);
+    const [selectedDevDomains, setSelectedDevDomains] = useState<DevDomain[]>([]);
+    const [currentPost, setCurrentPost] = useState<Partial<DetailPlayItem>>({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
-    const handleEdit = (post: Post) => {
-        setCurrentPost(post);
-        setEditModal(true);
+    useEffect(() => {
+        fetchAges();
+        fetchDomains();
+        fetchInitialPlayData();
+    }, []);
+    
+    useEffect(() => {
+        fetchInitialPlayData();
+    }, [currentPage]);
+
+    useEffect(() => {
+        if (isEditing && currentPost) {
+            setSelectedDevDomains(currentPost['dev-domains'] || []);
+        } else {
+            setSelectedDevDomains([]);
+        }
+    }, [isEditing, currentPost]);
+
+
+    const fetchInitialPlayData = async () => {
+        setLoading(true);
+        try {
+            const data = await getPlayAdminData(currentPage, ITEMS_PER_PAGE);
+            console.log(data)
+            setPlayInfo(data);
+        } catch (err) {
+            setError('놀이 정보를 불러오는 데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const columnHelper = createColumnHelper<Post>();
-    const columns = [
+    const fetchAges = async () => {
+        try {
+            const ageData = await getAgeTags();
+            setAges(ageData);
+        } catch (err) {
+            console.error('Failed to fetch regions:', err);
+            setError('연령대 정보를 불러오는 데 실패했습니다.');
+        }
+    };
+
+    const fetchDomains = async () => {
+        try {
+            const domainData = await getDevDomains();
+            setDevDomains(domainData);
+        } catch (err) {
+            console.error('Failed to fetch regions:', err);
+            setError('발달 영역 정보를 불러오는 데 실패했습니다.');
+        }
+    };
+
+    const handleEdit = (post: DetailPlayItem) => {
+        setCurrentPost(post);
+        setSelectedDevDomains(post['dev-domains'] || []);
+        setIsEditing(true);
+        setModal(true);
+    };
+
+    const handleDelete = async (id: number) => {
+        setDeleteId(id);
+        setDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            try {
+                await deletePlayAdminData(deleteId);
+                fetchInitialPlayData();
+                setDeleteModal(false);
+            } catch (error) {
+                console.error('삭제 중 오류 발생:', error);
+            }
+        }
+    };
+
+    const ActionCell = useCallback(({ row }: { row: any }) => (
+        <div>
+            <Button color="link" className="mr-3" onClick={() => handleEdit(row.original)}>
+                <FontAwesomeIcon icon={faEdit} />
+            </Button>
+            <Button color="link" onClick={() => handleDelete(row.original.kindergartenId)}>
+                <FontAwesomeIcon icon={faTrash} />
+            </Button>
+        </div>
+    ), [handleEdit, handleDelete]);
+
+    const columnHelper = createColumnHelper<DetailPlayItem>();
+    const columns = useMemo(() => [
         columnHelper.accessor('id', {
             header: '번호',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('playName', {
+        columnHelper.accessor('title', {
             header: '놀이 이름',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('age', {
+        columnHelper.accessor('age-tag.name', {
             header: '연령대',
-            cell: info => info.getValue(),
-        }),
-        columnHelper.accessor('category', {
-            header: '발달 영역',
-            cell: info => info.getValue(),
-        }),
-        columnHelper.accessor('useTools', {
-            header: '사용 교구',
-            cell: info => info.getValue(),
-        }),
-        columnHelper.accessor('place', {
-            header: '추천 장소',
             cell: info => info.getValue(),
         }),
         columnHelper.display({
             id: 'actions',
             header: '수정/삭제',
-            cell: (info) => (
-                <div>
-                    <Button color="link" className="mr-3" onClick={() => handleEdit(info.row.original)}>
-                        <FontAwesomeIcon icon={faEdit} />
-                    </Button>
-                    <Button color="link" onClick={() => console.log('삭제')}>
-                        <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                </div>
-            ),
+            cell: ActionCell,
         }),
-    ];
+    ], [ActionCell]);
 
     const table = useReactTable({
-        data,
+        data: playInfo?.pageList ?? [],
         columns,
         getCoreRowModel: getCoreRowModel(),
-    });
+    });    
+    
+    const handleDomainChange = (index: number, value: string) => {
+        const newSelectedDevDomains = [...selectedDevDomains];
+        const selectedDomain = devDomains.find(domain => domain.devDomainId === parseInt(value));
+        newSelectedDevDomains[index] = selectedDomain || {} as DevDomain;
+        setSelectedDevDomains(newSelectedDevDomains);
+    };
+
+    const addDomain = () => {
+        setSelectedDevDomains(prev => [...prev, {} as DevDomain]);
+    };
+
+    const removeDomain = (index: number) => {
+        setSelectedDevDomains(prev => prev.filter((_, i) => i !== index));
+    };
 
     const resetModal = () => {
-        setNewPost({});
-        setCurrentPost(null);
-    };
+        setCurrentPost({});
+        setIsEditing(false);
+        setSelectedDevDomains([]);
+    };    
 
     const toggle = () => {
         setModal(!modal);
@@ -93,26 +171,43 @@ function Play() {
         }
     };
 
-    const toggleEdit = () => {
-        setEditModal(!editModal);
-        if (editModal) {
-            resetModal();
-        }
-    };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    const handleSubmit = () => {
-        if (newPost.playName && newPost.category) {
-            setData([...data, { ...newPost, id: data.length + 1, createdAt: new Date().toISOString().split('T')[0] } as Post]);
+        if (!currentPost.title || !currentPost.text || !currentPost.tools || !currentPost['recommend-age'] || !currentPost['age-tag'] || !currentPost['dev-domains']) {
+            setSubmitError('모든 필수 항목을 입력해주세요.');
+            return;
+        }
+
+        const playData = {
+            id: isEditing && currentPost.id ? currentPost.id : null,
+            title: currentPost.title,
+            text: currentPost.text,
+            tools: currentPost.tools,
+            "recommend-age": currentPost['recommend-age'],
+            "age-tag": currentPost['age-tag'],
+            "dev-domains": selectedDevDomains.filter(domain => domain.devDomainId)
+        };
+    
+        try {
+            const response = await postPlayAdminData(playData);
+            fetchInitialPlayData();
             toggle();
+        } catch (error) {
+            console.error('API 오류:', error);
+            setSubmitError('데이터 제출 중 오류가 발생했습니다.');
         }
     };
 
-    const handleUpdate = () => {
-        if (currentPost) {
-            setData(data.map(post => post.id === currentPost.id ? { ...currentPost, ...newPost } : post));
-            toggleEdit();
-        }
-    };
+    const paginate = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+      };
+  
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>{error}</div>;
+    if (!playInfo) return <div>No data available</div>;
+  
+    const totalPages = playInfo.pageInfo.total;
 
     return (
         <div className="App">
@@ -154,72 +249,70 @@ function Play() {
                 </div>
             </div>
 
-             {/* 게시글 등록 모달 */}
              <Modal isOpen={modal} toggle={toggle}>
                 <ModalHeader toggle={toggle}>게시글 등록</ModalHeader>
                 <ModalBody>
                     <Form>
                         <FormGroup>
-                            <Label for="placeName">놀이 이름</Label>
+                            <Label for="title">놀이 이름</Label>
                             <Input 
                                 type="text" 
-                                name="placeName" 
-                                id="placeName" 
-                                value={newPost.playName || ''}
-                                onChange={(e) => setNewPost({...newPost, playName: e.target.value})} 
+                                name="title" 
+                                id="title" 
+                                value={currentPost.title || ''}
+                                onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} 
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label for="age">연령대</Label>
+                            <Label for="region">연령대</Label>
                             <Input 
                                 type="select" 
-                                name="age" 
-                                id="age" 
-                                value={newPost.age || ''}
-                                onChange={(e) => setNewPost({...newPost, age: e.target.value})}
+                                name="region" 
+                                id="region" 
+                                value={currentPost['age-tag']?.id || ''}
+                                onChange={(e) => setCurrentPost({...currentPost, "age-tag": ages.find(r => r.id === parseInt(e.target.value))})}
                             >
                                 <option value="">선택하세요</option>
-                                <option>24개월 미만</option>
-                                <option>5살</option>
+                                {ages.map(age => (
+                                    <option key={age.id} value={age.id}>{age.name}</option>
+                                ))}
                             </Input>
                         </FormGroup>
                         <FormGroup>
-                            <Label for="category">발달 영역</Label>
-                            <Input 
-                                type="select" 
-                                name="category" 
-                                id="category" 
-                                value={newPost.category || ''}
-                                onChange={(e) => setNewPost({...newPost, category: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>신체 발달</option>
-                                <option>손재주</option>
-                            </Input>
+                            <Label>발달 영역</Label>
+                            {selectedDevDomains.map((domain, index) => (
+                                <div key={index} className="d-flex mb-2">
+                                    <Input 
+                                        type="select" 
+                                        value={domain.devDomainId || ''}
+                                        onChange={(e) => handleDomainChange(index, e.target.value)}
+                                        className="me-2"
+                                    >
+                                        <option value="">선택하세요</option>
+                                        {devDomains.map(a => (
+                                            <option key={a.devDomainId} value={a.devDomainId}>{a.devDomainType}</option>
+                                        ))}
+                                    </Input>
+                                    {selectedDevDomains.length > 1 && (
+                                        <Button color="danger" onClick={() => removeDomain(index)}>
+                                            <FontAwesomeIcon icon={faMinus} />
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                            <Button color="primary" onClick={addDomain}>
+                                <FontAwesomeIcon icon={faPlus} /> 영역 추가
+                            </Button>
                         </FormGroup>
-                        <FormGroup>
+                                                <FormGroup>
                             <Label for="useTools">사용 교구</Label>
                             <Input 
                                 type="text" 
                                 name="useTools" 
                                 id="useTools" 
-                                value={newPost.useTools || ''}
-                                onChange={(e) => setNewPost({...newPost, useTools: e.target.value})} 
+                                value={currentPost.tools || ''}
+                                onChange={(e) => setCurrentPost({...currentPost, tools: e.target.value})}
                             />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="place">추천 장소</Label>
-                            <Input 
-                                type="select" 
-                                name="place" 
-                                id="place" 
-                                value={newPost.place || ''}
-                                onChange={(e) => setNewPost({...newPost, place: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>실내</option>
-                                <option>야외</option>
-                            </Input>
                         </FormGroup>
                         <FormGroup>
                             <Label for="description">놀이 설명</Label>
@@ -227,107 +320,37 @@ function Play() {
                                 type="textarea" 
                                 name="description" 
                                 id="description" 
-                                value={newPost.description || ''}
-                                onChange={(e) => setNewPost({...newPost, description: e.target.value})}
-                                style={{ height: '300px', resize: 'none'  }}
-                            >
-                            </Input>
+                                value={currentPost.text || ''}
+                                rows="10"
+                                onChange={(e) => setCurrentPost({...currentPost, text: e.target.value})}
+                            />
                         </FormGroup>
                     </Form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleSubmit} disabled={ !newPost.playName || !newPost.category}>등록</Button>{' '}
+                    <Button color="primary" onClick={handleSubmit} disabled={!currentPost.title || !currentPost.text}>
+                        {isEditing ? '수정' : '등록'}
+                    </Button>{' '}
                     <Button color="secondary" onClick={toggle}>취소</Button>
                 </ModalFooter>
             </Modal>
 
-            {/* 게시글 수정 모달 */}
-            <Modal isOpen={editModal} toggle={toggleEdit}>
-                <ModalHeader toggle={toggleEdit}>게시글 수정</ModalHeader>
+            <Modal isOpen={deleteModal} toggle={() => setDeleteModal(false)}>
+                <ModalHeader toggle={() => setDeleteModal(false)}>삭제 확인</ModalHeader>
                 <ModalBody>
-                    <Form>
-                        <FormGroup>
-                            <Label for="playName">놀이 이름</Label>
-                            <Input 
-                                type="text" 
-                                name="playName" 
-                                id="playName" 
-                                value={newPost.playName || currentPost?.playName || ''}
-                                onChange={(e) => setNewPost({...newPost, playName: e.target.value})} 
-                            />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="age">연령대</Label>
-                            <Input 
-                                type="select" 
-                                name="age" 
-                                id="age" 
-                                value={newPost.age || currentPost?.age || ''}
-                                onChange={(e) => setNewPost({...newPost, age: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>24개월 미만</option>
-                                <option>5살</option>
-                            </Input>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="category">발달 영역</Label>
-                            <Input 
-                                type="select" 
-                                name="category" 
-                                id="category" 
-                                value={newPost.category || currentPost?.category || ''}
-                                onChange={(e) => setNewPost({...newPost, category: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>신체 발달</option>
-                                <option>손재주</option>
-                            </Input>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="useTools">사용 교구</Label>
-                            <Input 
-                                type="text" 
-                                name="useTools" 
-                                id="useTools" 
-                                value={newPost.useTools || currentPost?.useTools || ''}
-                                onChange={(e) => setNewPost({...newPost, useTools: e.target.value})} 
-                            />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="place">추천 장소</Label>
-                            <Input 
-                                type="select" 
-                                name="place" 
-                                id="place" 
-                                value={newPost.place || currentPost?.place || ''}
-                                onChange={(e) => setNewPost({...newPost, place: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>실내</option>
-                                <option>야외</option>
-                            </Input>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="description">놀이 설명</Label>
-                            <Input 
-                                type="textarea" 
-                                name="description" 
-                                id="description" 
-                                value={newPost.description || currentPost?.description || ''}
-                                onChange={(e) => setNewPost({...newPost, description: e.target.value})}
-                                style={{ height: '300px', resize: 'none' }}
-                            >
-                            </Input>
-                        </FormGroup>
-                    </Form>
+                    정말로 이 게시글을 삭제하시겠습니까?
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleUpdate}>수정</Button>{' '}
-                    <Button color="secondary" onClick={toggleEdit}>취소</Button>
+                    <Button color="danger" onClick={confirmDelete}>삭제</Button>{' '}
+                    <Button color="secondary" onClick={() => setDeleteModal(false)}>취소</Button>
                 </ModalFooter>
             </Modal>
 
+            <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            paginate={paginate}
+            />
             <Footer />
         </div>
     );

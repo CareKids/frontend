@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Alert } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,140 +6,154 @@ import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../../components/admin/Header'
 import Footer from '../../components/Footer'
+import Pagination from '../../components/Pagination';
 
-type Post = {
-    id: number;
-    placeName: string;
-    image: string;
-    category: string;
-    createdAt: string;
-};
+import { getPlaceAdminData, postPlaceAdminData, deletePlaceAdminData } from '../../api/admin';
+import { PlaceAdminInfo, PlaceAdminItem } from '../../api/adminTypes';
 
-function Place() {
-    const [data, setData] = useState<Post[]>([
-        { id: 1, placeName: '케어키즈 카페', image: '/api/placeholder/50/50', category: '카페', createdAt: '2024-06-28' },
-        { id: 2, placeName: '케어키즈 음식점', image: '/api/placeholder/50/50', category: '음식점', createdAt: '2024-06-28' },
-    ]);
+const ITEMS_PER_PAGE = 12;
+const Place: React.FC = () => {
+    const [placeInfo, setPlaceInfo] = useState<PlaceAdminInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [modal, setModal] = useState(false);
-    const [editModal, setEditModal] = useState(false);
-    const [currentPost, setCurrentPost] = useState<Post | null>(null);
-    const [newPost, setNewPost] = useState<Partial<Post>>({});
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [fileError, setFileError] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentPost, setCurrentPost] = useState<Partial<PlaceAdminItem>>({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    const handleEdit = (post: Post) => {
+    useEffect(() => {
+        fetchInitialPlaceData();
+    }, []);
+    
+    useEffect(() => {
+        fetchInitialPlaceData();
+    }, [currentPage]);
+
+    const fetchInitialPlaceData = async () => {
+        setLoading(true);
+        try {
+            const data = await getPlaceAdminData(currentPage, ITEMS_PER_PAGE);
+            setPlaceInfo(data);
+        } catch (err) {
+            setError('장소 정보를 불러오는 데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEdit = (post: PlaceAdminItem) => {
         setCurrentPost(post);
-        setEditModal(true);
-    };
-    const openImageInNewTab = (imageUrl: string) => {
-        window.open(imageUrl, '_blank');
+        setIsEditing(true);
+        setModal(true);
     };
 
-    const columnHelper = createColumnHelper<Post>();
-    const columns = [
+    const handleDelete = async (id: number) => {
+        setDeleteId(id);
+        setDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            try {
+                await deletePlaceAdminData(deleteId);
+                fetchInitialPlaceData();
+                setDeleteModal(false);
+            } catch (error) {
+                console.error('삭제 중 오류 발생:', error);
+            }
+        }
+    };
+
+    const ActionCell = useCallback(({ row }: { row: any }) => (
+        <div>
+            <Button color="link" className="mr-3" onClick={() => handleEdit(row.original)}>
+                <FontAwesomeIcon icon={faEdit} />
+            </Button>
+            <Button color="link" onClick={() => handleDelete(row.original.id)}>
+                <FontAwesomeIcon icon={faTrash} />
+            </Button>
+        </div>
+    ), [handleEdit, handleDelete]);
+
+    const columnHelper = createColumnHelper<PlaceAdminItem>();
+    const columns = useMemo(() => [
         columnHelper.accessor('id', {
             header: '번호',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('placeName', {
+        columnHelper.accessor('name', {
             header: '장소 이름',
             cell: info => info.getValue(),
         }),
-        columnHelper.accessor('image', {
-            header: '대표 이미지',
-            cell: info => (
-                <img 
-                    src={info.getValue()} 
-                    alt="대표 이미지" 
-                    style={{ width: '50px', height: '50px', cursor: 'pointer' }} 
-                    onClick={() => openImageInNewTab(info.getValue())}
-                />
-            ),
-        }),
-        columnHelper.accessor('category', {
+        columnHelper.accessor('maincate.name', {
             header: '카테고리',
-            cell: info => info.getValue(),
-        }),
-        columnHelper.accessor('createdAt', {
-            header: '등록 일자',
             cell: info => info.getValue(),
         }),
         columnHelper.display({
             id: 'actions',
             header: '수정/삭제',
-            cell: (info) => (
-                <div>
-                    <Button color="link" className="mr-3" onClick={() => handleEdit(info.row.original)}>
-                        <FontAwesomeIcon icon={faEdit} />
-                    </Button>
-                    <Button color="link" onClick={() => console.log('삭제')}>
-                        <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                </div>
-            ),
+            cell: ActionCell,
         }),
-    ];
+    ], [ActionCell]);
 
     const table = useReactTable({
-        data,
+        data: placeInfo?.pageList ?? [],
         columns,
         getCoreRowModel: getCoreRowModel(),
     });
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // 파일 타입 검증
-            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!validTypes.includes(file.type)) {
-                setFileError('올바른 이미지 파일을 선택해주세요 (JPG, PNG, GIF)');
-                setPreviewImage(null);
-                return;
-            }
-
-            setFileError(null);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviewImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
     const resetModal = () => {
-        setNewPost({});
-        setPreviewImage(null);
-        setFileError(null);
-        setCurrentPost(null);
+        setCurrentPost({});
+        setIsEditing(false);
     };
 
     const toggle = () => {
         setModal(!modal);
-        if (modal) {
+        if (!modal) {
             resetModal();
         }
     };
+    
+    // const handleSubmit = async (e: React.FormEvent) => {
+    //     e.preventDefault();
 
-    const toggleEdit = () => {
-        setEditModal(!editModal);
-        if (editModal) {
-            resetModal();
-        }
-    };
+    //     const placeData = {
+    //         id: isEditing && currentPost.id ? currentPost.id : null,
+    //         name: currentPost.name,
+    //         "img-url": currentPost['img-url'],
+    //         address: currentPost.address,
+    //         'new-address': currentPost['new-address'] || '',
+    //         phone: currentPost.phone || '',
+    //         region: currentPost.region,
+    //         type: currentPost.type,
+    //         "parking-type": currentPost['parking-type'],
+    //         "is-free": currentPost['is-free'],
+    //         'operate-time': currentPost['operate-time'],
+    //         maincate: currentPost.maincate,
+    //         subcate: currentPost.subcate,
+    //         keywords: currentPost.keywords,
+    //     };
+    
+    //     try {
+    //         const response = await postPlaceAdminData(placeData);
+    //         fetchInitialPlaceData();
+    //         toggle();
+    //     } catch (error) {
+    //         console.error('API 오류:', error);
+    //     }
+    // };
 
-    const handleSubmit = () => {
-        if (newPost.placeName && newPost.category) {
-            setData([...data, { ...newPost, id: data.length + 1, createdAt: new Date().toISOString().split('T')[0], image: previewImage || '/api/placeholder/50/50' } as Post]);
-            toggle();
-        }
-    };
-
-    const handleUpdate = () => {
-        if (currentPost) {
-            setData(data.map(post => post.id === currentPost.id ? { ...currentPost, ...newPost, image: previewImage || currentPost.image } : post));
-            toggleEdit();
-        }
-    };
+    const paginate = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+      };
+  
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>{error}</div>;
+    if (!placeInfo) return <div>No data available</div>;
+  
+    const totalPages = placeInfo.pageInfo.total;
 
     return (
         <div className="App">
@@ -192,11 +206,11 @@ function Place() {
                                 type="text" 
                                 name="placeName" 
                                 id="placeName" 
-                                value={newPost.placeName || ''}
-                                onChange={(e) => setNewPost({...newPost, placeName: e.target.value})} 
+                                value={currentPost.name || ''}
+                                onChange={(e) => setCurrentPost({...currentPost, name: e.target.value})} 
                             />
                         </FormGroup>
-                        <FormGroup>
+                        {/* <FormGroup>
                             <Label for="category">카테고리</Label>
                             <Input 
                                 type="select" 
@@ -210,94 +224,47 @@ function Place() {
                                 <option>음식점</option>
                                 <option>놀이터</option>
                             </Input>
-                        </FormGroup>
+                        </FormGroup> */}
                         <FormGroup>
-                            <Label for="image">대표 이미지</Label>
+                            <Label for="url">대표 이미지</Label>
                             <Input 
-                                type="file" 
-                                name="image" 
-                                id="image" 
-                                onChange={handleImageChange}
-                                accept="image/jpeg, image/png, image/gif"
+                                type="text" 
+                                name="url" 
+                                id="url" 
+                                value={currentPost['img-url'] || ''}
+                                onChange={(e) => setCurrentPost({...currentPost, "img-url": e.target.value})} 
                             />
-                            {fileError && <Alert color="danger">{fileError}</Alert>}
-                            {previewImage ? (
-                                <img 
-                                    src={previewImage} 
-                                    alt="Preview" 
-                                    style={{ width: '100px', marginTop: '10px', cursor: 'pointer' }} 
-                                    onClick={() => openImageInNewTab(previewImage)}
-                                />
-                            ) : currentPost?.image && (
-                                <img 
-                                    src={currentPost.image} 
-                                    alt="Current" 
-                                    style={{ width: '100px', marginTop: '10px', cursor: 'pointer' }} 
-                                    onClick={() => openImageInNewTab(currentPost.image)}
-                                />
-                            )}
                         </FormGroup>
                     </Form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleSubmit} disabled={!!fileError || !newPost.placeName || !newPost.category}>등록</Button>{' '}
+                    {/* <Button color="primary" onClick={handleSubmit} disabled={!currentPost.name || !currentPost.address}>
+                        {isEditing ? '수정' : '등록'}
+                    </Button>{' '}
+                    <Button color="secondary" onClick={toggle}>취소</Button> */}
+                    <Button color="primary" disabled={!currentPost.name || !currentPost.address}>
+                        {isEditing ? '수정' : '등록'}
+                    </Button>{' '}
                     <Button color="secondary" onClick={toggle}>취소</Button>
                 </ModalFooter>
             </Modal>
 
-            {/* 게시글 수정 모달 */}
-            <Modal isOpen={editModal} toggle={toggleEdit}>
-                <ModalHeader toggle={toggleEdit}>게시글 수정</ModalHeader>
+            <Modal isOpen={deleteModal} toggle={() => setDeleteModal(false)}>
+                <ModalHeader toggle={() => setDeleteModal(false)}>삭제 확인</ModalHeader>
                 <ModalBody>
-                    <Form>
-                        <FormGroup>
-                            <Label for="placeName">장소 이름</Label>
-                            <Input 
-                                type="text" 
-                                name="placeName" 
-                                id="placeName" 
-                                value={newPost.placeName || currentPost?.placeName || ''}
-                                onChange={(e) => setNewPost({...newPost, placeName: e.target.value})} 
-                            />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="category">카테고리</Label>
-                            <Input 
-                                type="select" 
-                                name="category" 
-                                id="category" 
-                                value={newPost.category || currentPost?.category || ''}
-                                onChange={(e) => setNewPost({...newPost, category: e.target.value})}
-                            >
-                                <option value="">선택하세요</option>
-                                <option>카페</option>
-                                <option>음식점</option>
-                                <option>놀이터</option>
-                            </Input>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="image">대표 이미지</Label>
-                            <Input 
-                                type="file" 
-                                name="image" 
-                                id="image" 
-                                onChange={handleImageChange}
-                                accept="image/jpeg, image/png, image/gif"
-                            />
-                            {fileError && <Alert color="danger">{fileError}</Alert>}
-                            {previewImage ? 
-                                <img src={previewImage} alt="Preview" style={{ width: '100px', marginTop: '10px' }} /> :
-                                currentPost?.image && <img src={currentPost.image} alt="Current" style={{ width: '100px', marginTop: '10px' }} />
-                            }
-                        </FormGroup>
-                    </Form>
+                    정말로 이 게시글을 삭제하시겠습니까?
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="primary" onClick={handleUpdate} disabled={!!fileError}>수정</Button>{' '}
-                    <Button color="secondary" onClick={toggleEdit}>취소</Button>
+                    <Button color="danger" onClick={confirmDelete}>삭제</Button>{' '}
+                    <Button color="secondary" onClick={() => setDeleteModal(false)}>취소</Button>
                 </ModalFooter>
             </Modal>
 
+            <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            paginate={paginate}
+            />
             <Footer />
         </div>
     );

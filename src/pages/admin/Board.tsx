@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper, CellContext } from '@tanstack/react-table';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Alert } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../../components/admin/Header'
 import Footer from '../../components/Footer'
+import Pagination from '../../components/Pagination';
 
 import { getBoardAdminData, postBoardAdminData, deleteBoardAdminData } from '../../api/admin';
 import { BoardAdminInfo, BoardAdminItem } from '../../api/adminTypes';
@@ -27,7 +28,6 @@ const Board: React.FC = () => {
     useEffect(() => {
         fetchInitialBoardData();
     }, []);
-
     
     useEffect(() => {
         fetchInitialBoardData();
@@ -45,6 +45,9 @@ const Board: React.FC = () => {
 
     const ImageCell = useCallback(({ getValue }: CellContext<BoardAdminItem, string>) => {
         const value = getValue();
+        if (!value) {
+            return <span>-</span>;
+        }
         return (
             <img 
                 src={value} 
@@ -190,8 +193,11 @@ const Board: React.FC = () => {
     
         if (previewImage) {
             const response = await fetch(previewImage);
-            const blob = await response.blob();
-            formData.append('files', blob, 'image.jpg');
+            const imageblob = await response.blob();
+            formData.append('file', imageblob, 'image.jpg');
+        }
+        else {
+            formData.append('file', "");
         }
     
         try {
@@ -302,7 +308,6 @@ const Board: React.FC = () => {
                     <Button color="secondary" onClick={toggle}>취소</Button>
                 </ModalFooter>
             </Modal>
-
             
             <Modal isOpen={deleteModal} toggle={() => setDeleteModal(false)}>
                 <ModalHeader toggle={() => setDeleteModal(false)}>삭제 확인</ModalHeader>
@@ -315,30 +320,11 @@ const Board: React.FC = () => {
                 </ModalFooter>
             </Modal>
         
-            <nav aria-label="Page navigation" className="mt-4 bg-transparent">
-            <ul className="pagination justify-content-center">
-                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
-                    <FontAwesomeIcon icon={faChevronLeft} />
-                </button>
-                </li>
-                {Array.from({ length: totalPages }).map((_, index) => (
-                <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                    <button
-                    onClick={() => paginate(index + 1)}
-                    className={`page-link ${currentPage === index + 1 ? 'bg-primary border-primary' : 'text-primary'}`}
-                    >
-                    {index + 1}
-                    </button>
-                </li>
-                ))}
-                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
-                    <FontAwesomeIcon icon={faChevronRight} />
-                </button>
-                </li>
-            </ul>
-            </nav>
+            <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            paginate={paginate}
+            />
             <Footer />
         </div>
     );
