@@ -1,31 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button, Input, InputGroup, Card, CardImg, CardBody, CardTitle, CardText, Row, Col } from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Button, Card, CardBody, CardTitle, CardText, CardImg, Row, Col } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 import Header from '../components/Header';
 import './PlaceMap.css'
 
-interface SearchResult {
+import { PlaceMapItem } from '../api/types';
+
+interface Recommendation {
     id: string;
-    category: string;
-    placeName: string;
-    address: string;
-    openingHours: string;
-    imageUrl: string;
-    tags: string[];
-    lat: number;
-    lng: number;
-  }
+    metadata: PlaceMapItem;
+}
+  
+interface LocationState {
+    searchResults: {
+        recommendations: Recommendation[];
+    };
+}
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  paginate: (pageNumber: number) => void;
+}
+
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, paginate }) => {
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPages = 10;
+    const sidePages = 4;
+
+    if (totalPages <= maxPages) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    pageNumbers.push(1);
+
+    if (currentPage > sidePages + 1) {
+      pageNumbers.push('...');
+    }
+
+    const start = Math.max(2, currentPage - sidePages);
+    const end = Math.min(totalPages - 1, currentPage + sidePages);
+
+    for (let i = start; i <= end; i++) {
+      pageNumbers.push(i);
+    }
+
+    if (currentPage < totalPages - sidePages) {
+      pageNumbers.push('...');
+    }
+
+    pageNumbers.push(totalPages);
+
+    return pageNumbers;
+  };
+
+  return (
+    <nav aria-label="Page navigation" className="mt-4 bg-transparent">
+      <ul className="pagination justify-content-center">
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <button className="page-link text-primary" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
+            <FontAwesomeIcon icon={faChevronLeft} />
+          </button>
+        </li>
+        {getPageNumbers().map((number, index) => (
+          <li key={index} className={`page-item ${currentPage === number ? 'active' : ''}`}>
+            {number === '...' ? (
+              <span className="page-link">...</span>
+            ) : (
+              <button
+                onClick={() => paginate(number as number)}
+                className={`page-link ${currentPage === number ? 'bg-primary border-primary' : 'text-primary'}`}
+              >
+                {number}
+              </button>
+            )}
+          </li>
+        ))}
+        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+          <button className="page-link text-primary" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages}>
+            <FontAwesomeIcon icon={faChevronRight} />
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+};
 
 const PlaceMap: React.FC = () => {
-    const [selectedPlace, setSelectedPlace] = useState<SearchResult | null>(null);
+    const [selectedPlace, setSelectedPlace] = useState<PlaceMapItem | null>(null);
     const [map, setMap] = useState<any>(null);
     const [markers, setMarkers] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<PlaceMapItem[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+    const [wordcloudImage, setWordcloudImage] = useState<string | null>(null);
+    const [isImageLoading, setIsImageLoading] = useState(false);
+    const [imageError, setImageError] = useState<string | null>(null);
 
     const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        const state = location.state as LocationState;
+        if (state && state.searchResults) {
+            const results = state.searchResults.recommendations.map(item => item.metadata);
+            setSearchResults(results);
+        }
+    }, [location]);
 
     useEffect(() => {
         const script = document.createElement('script');
@@ -35,32 +120,34 @@ const PlaceMap: React.FC = () => {
         document.body.appendChild(script);
 
         script.onload = () => {
-            const center = new window.naver.maps.LatLng(37.3595704, 127.105399);
-            const mapInstance = new window.naver.maps.Map('map', {
-                center: center,
-                zoom: 16
-            });
-            setMap(mapInstance);
+            if (searchResults.length > 0) {
+                const center = new window.naver.maps.LatLng(searchResults[0].latitude, searchResults[0].longitude);
+                const mapInstance = new window.naver.maps.Map('map', {
+                    center: center,
+                    zoom: 14
+                });
+                setMap(mapInstance);
+            }
         };
 
         return () => {
             document.body.removeChild(script);
         };
-    }, []);
+    }, [searchResults]);
 
     useEffect(() => {
-        if (map && searchResults.length > 0) {
-            const newMarkers = searchResults.map(place => {
+        if (map) {
+            markers.forEach(marker => marker.setMap(null));
+
+            const indexOfLastItem = currentPage * itemsPerPage;
+            const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+            const currentItems = searchResults.slice(indexOfFirstItem, indexOfLastItem);
+
+            const newMarkers = currentItems.map(place => {
                 const marker = new window.naver.maps.Marker({
-                    position: new window.naver.maps.LatLng(place.lat, place.lng),
+                    position: new window.naver.maps.LatLng(place.latitude, place.longitude),
                     map: map,
-                    title: place.placeName,
-                    icon: {
-                        url: 'https://navermaps.github.io/maps.js.ncp/docs/img/example/pin_default.png',
-                        size: new window.naver.maps.Size(24, 37),
-                        anchor: new window.naver.maps.Point(12, 37),
-                        scaledSize: new window.naver.maps.Size(24, 37)
-                    }
+                    title: place.content,
                 });
 
                 window.naver.maps.Event.addListener(marker, 'click', () => handlePlaceClick(place));
@@ -70,85 +157,60 @@ const PlaceMap: React.FC = () => {
 
             setMarkers(newMarkers);
         }
-    }, [map]);
+    }, [map, searchResults, currentPage]);
 
     useEffect(() => {
-        if (map && selectedPlace) {
-            const position = new window.naver.maps.LatLng(selectedPlace.lat, selectedPlace.lng);
-            map.setCenter(position);
-            map.setZoom(18);
-
-            markers.forEach(marker => {
-                if (marker.getTitle() === selectedPlace.placeName) {
-                    marker.setIcon({
-                        url: 'https://navermaps.github.io/maps.js.ncp/docs/img/example/pin_default.png',
-                        size: new window.naver.maps.Size(30, 46),
-                        anchor: new window.naver.maps.Point(15, 46),
-                        scaledSize: new window.naver.maps.Size(30, 46)
-                    });
-                } else {
-                    marker.setIcon({
-                        url: 'https://navermaps.github.io/maps.js.ncp/docs/img/example/pin_selected.png',
-                        size: new window.naver.maps.Size(24, 37),
-                        anchor: new window.naver.maps.Point(12, 37),
-                        scaledSize: new window.naver.maps.Size(24, 37)
-                    });
-                }
+        if (selectedPlace && selectedPlace.wordcloud_img_arr) {
+            setIsImageLoading(true);
+            setImageError(null);
+            fetch('http://localhost:5000/decode_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ base64_encode_str: selectedPlace.wordcloud_img_arr }),
+                credentials: 'include',
+            })
+            .then(response => response.json())
+            .then(data => {
+                setWordcloudImage(data.img_data);
+                setIsImageLoading(false);
+            })
+            .catch(error => {
+                console.error('Error fetching wordcloud image:', error);
+                setImageError('워드클라우드 이미지를 불러오는데 실패했습니다.');
+                setIsImageLoading(false);
             });
+        } else {
+            setWordcloudImage(null);
         }
     }, [selectedPlace]);
-  
+
     const handleClick = () => {
       navigate('/search');
     };
 
-    const handlePlaceClick = (place: SearchResult) => {
+    const handlePlaceClick = (place: PlaceMapItem) => {
         setSelectedPlace(place);
+        
+        if (map) {
+            map.setCenter(new window.naver.maps.LatLng(place.latitude, place.longitude));
+            map.setZoom(17);
+        }
     };
 
     const handleBackClick = () => {
         setSelectedPlace(null);
         if (map) {
-            map.setZoom(16);
-            markers.forEach(marker => marker.setIcon(null));
+            map.setZoom(14);
         }
     };
 
-    const searchResults: SearchResult[] = [
-        {
-            id: '1',
-            category: '음식점',
-            placeName: '음식점 A',
-            address: '서울시 강남구 역삼동',
-            openingHours: '09:00 - 21:00',
-            imageUrl: 'https://via.placeholder.com/150?text=Restaurant',
-            tags: ['맛집', '한식'],
-            lat: 37.3595704,
-            lng: 127.105399
-        },
-        {
-            id: '2',
-            category: '카페',
-            placeName: '카페 B',
-            address: '서울시 강남구 신사동',
-            openingHours: '08:00 - 20:00',
-            imageUrl: 'https://via.placeholder.com/150?text=Cafe',
-            tags: ['커피', '디저트'],
-            lat: 37.3605704,
-            lng: 127.106399
-        },
-        {
-            id: '3',
-            category: '쇼핑',
-            placeName: '상점 C',
-            address: '서울시 강남구 청담동',
-            openingHours: '10:00 - 22:00',
-            imageUrl: 'https://via.placeholder.com/150?text=Shop',
-            tags: ['의류', '액세서리'],
-            lat: 37.3585704,
-            lng: 127.104399
-        },
-    ];
+    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = searchResults.slice(indexOfFirstItem, indexOfLastItem);
 
     const renderListView = () => (
         <>
@@ -156,78 +218,33 @@ const PlaceMap: React.FC = () => {
                 <button className="btn btn-primary w-100" onClick={handleClick}>다시 찾아보기</button>
             </div>
             <div>
-                {searchResults.map((result, index) => (
-                    <Card key={result.id} className="mb-3" style={{ border: 'none', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }} onClick={() => handlePlaceClick(result)}>
+            {currentItems.map((result, index) => (
+                    <Card key={result.content} className="" style={{ border: 'none', borderBottom: '1px solid #dee2e6', cursor: 'pointer' }} onClick={() => handlePlaceClick(result)}>
                         <CardBody>
                             <Row>
-                            <CardImg 
-                                src={result.imageUrl} 
-                                alt={result.placeName} 
-                                className="img-fluid rounded" 
-                                style={{
-                                objectFit: 'cover',
-                                height: '200px',
-                                width: '100%'
-                                }} 
-                            />
-                                <Row className="align-items-center mb-3 mt-3 pe-0">
+                                <Row className="align-items-center mb-2 pe-0">
                                     <Col>
-                                        <CardTitle tag="h5" className="mb-0"><strong>{result.placeName}</strong></CardTitle>
+                                    <Button color="secondary" size="sm" className="mb-2" disabled>{result.large_category}</Button>
+                                    <CardTitle tag="h5" className="mb-2"><strong>{result.content}</strong></CardTitle>
                                     </Col>
-                                    </Row>
+                                </Row>
                                 <CardText>
-                                    <strong>주소 · </strong> {result.address}<br />
-                                    <strong>운영시간 · </strong> {result.openingHours}
+                                    <strong>AI 별점 · </strong> {(result.ai_score * 10).toFixed(1)}<br />
+                                    <strong>주소 · </strong> {result.new_address}<br />
+                                    <strong>전화번호 · </strong> {result.tel_number}<br />
                                 </CardText>
                             </Row>
-                            <div className="mt-3">
-                            {result.tags.map((tag, tagIndex) => (
-                                <Button
-                                key={tagIndex}
-                                color="primary"
-                                outline
-                                size="sm"
-                                className="me-2 mb-2 rounded-pill"
-                                style={{ fontSize: '0.8rem', pointerEvents: 'none' }}
-                                >
-                                {tag}
-                                </Button>
-                            ))}
-                            </div>
                         </CardBody>
                     </Card>
                 ))}
             </div>
-            <div className="d-flex justify-content-center">
-                <Pagination>
-                    <PaginationItem>
-                    <PaginationLink first href="#" />
-                    </PaginationItem>
-                    <PaginationItem>
-                    <PaginationLink previous href="#" />
-                    </PaginationItem>
-                    <PaginationItem active>
-                    <PaginationLink href="#">
-                        1
-                    </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                    <PaginationLink href="#">
-                        2
-                    </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                    <PaginationLink next href="#" />
-                    </PaginationItem>
-                    <PaginationItem>
-                    <PaginationLink last href="#" />
-                    </PaginationItem>
-                </Pagination>
-            </div>
+            <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(searchResults.length / itemsPerPage)}
+                paginate={paginate}
+            />
         </>
     );
-
-
 
     const renderDetailView = () => (
         <div className="detail-view" style={{ padding: '0', overflowY: 'auto', maxHeight: 'calc(100vh - 80px)' }}>
@@ -239,26 +256,67 @@ const PlaceMap: React.FC = () => {
             </div>
             {selectedPlace && (
                 <Card className="border-0">
-                    <CardImg top width="100%" src={selectedPlace.imageUrl} alt={selectedPlace.placeName} style={{ height: '300px', objectFit: 'cover' }} />
                     <CardBody>
-                        <div className="mb-3">
-                            {selectedPlace.tags.map((tag, index) => (
-                                <Button key={index} color="primary" outline size="sm" className="me-2 mb-2 rounded-pill">
-                                    {tag}
-                                </Button>
-                            ))}
-                        </div>
-                        <CardTitle tag="h4" className="mb-3"><strong>{selectedPlace.placeName}</strong></CardTitle>
-                        <CardText>
-                            <strong>카테고리:</strong> {selectedPlace.category}<br />
-                            <strong>주소:</strong> {selectedPlace.address}<br />
-                            <strong>운영시간:</strong> {selectedPlace.openingHours}
+                        <Button color="secondary" size="sm" className="mb-2" disabled>{selectedPlace.large_category}</Button>
+                        <CardTitle tag="h4" className="mb-3"><strong>{selectedPlace.content}</strong></CardTitle>
+                        <CardText tag="div">
+                            <div className="mb-3">
+                                <strong>AI 별점</strong>
+                                <span className="small"> (리뷰 데이터 활용 자동 생성)</span>
+                                <div>{(selectedPlace.ai_score * 10).toFixed(1)}</div>
+                            </div>
+                            <div className="mb-3">
+                                <strong>자치구</strong>
+                                <div>{selectedPlace.gu_name}</div>
+                            </div>
+                            <div className="mb-3">
+                                <strong>상세 주소</strong>
+                                <div>{selectedPlace.new_address}</div>
+                            </div>
+                            <div className="mb-3">
+                                <strong>전화번호</strong>
+                                <div>{selectedPlace.tel_number}</div>
+                            </div>
+                            <div className="mb-3">
+                                <strong>장소 설명</strong>
+                                <div>{selectedPlace.facility_introduction}</div>
+                            </div>
+                            <div className="mb-3">
+                                <strong>키워드</strong>
+                                <div>
+                                    {selectedPlace.positive_keyword.split(',').map((keyword, index) => (
+                                        <Button
+                                            key={index}
+                                            color="secondary"
+                                            outline
+                                            size="sm"
+                                            className="mb-2 me-2"
+                                            style={{
+                                                fontSize: '0.8rem',
+                                                borderColor: '#6c757d',
+                                                color: '#6c757d',
+                                                pointerEvents: 'none'
+                                            }}
+                                        >
+                                            {keyword.trim()}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                            {isImageLoading && <div>워드클라우드 이미지 로딩 중...</div>}
+                            {imageError && <div className="text-danger">{imageError}</div>}                            
+                            {wordcloudImage && (
+                                <div className="mb-3">
+                                    <strong>워드클라우드</strong>
+                                    <img src={wordcloudImage} alt="Wordcloud" style={{width: '100%', height: 'auto'}} />
+                                </div>
+                            )}
                         </CardText>
                     </CardBody>
                 </Card>
             )}
         </div>
-    );      
+    );    
 
     return (        
         <div className='App'>

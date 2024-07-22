@@ -299,3 +299,17 @@ export interface PlaceSearch {
   region: Region | {};
   maincate: MainCate | {};
 }
+
+export interface PlaceMapItem {
+  ai_score: number;
+  content: string;
+  facility_introduction: string;
+  gu_name: string;
+  large_category: string;
+  latitude: number;
+  longitude: number;
+  positive_keyword: string;
+  new_address: string;
+  tel_number: string;
+  wordcloud_img_arr: null | string;
+}

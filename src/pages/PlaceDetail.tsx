@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Card, CardBody, Row, Col, Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,40 +6,46 @@ import { faCar, faChild, faPhone, faClock, faMapMarkerAlt, faList } from '@forta
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-
-interface PlaceDetail {
-  id: string;
-  category: string;
-  name: string;
-  address: string;
-  phone: string;
-  openingHours: string;
-  price: string;
-  tags: string[];
-  features: { icon: any; label: string }[];
-}
+import { getPlaceDetailData } from '../api/load';
+import { PlaceAdminItem } from '../api/adminTypes';
 
 const PlaceDetail: React.FC = () => {
+  const [placeItem, setPlaceItem] = useState<PlaceAdminItem | null>(null);
   const { id } = useParams<{ id: string }>();
-  const placeDetail: PlaceDetail = {
-    id: id || '',
-    category: '음식점',
-    name: '레스토랑',
-    address: '서울시 강남구 테헤란로 123',
-    phone: '02-1234-5678',
-    openingHours: '매일 11:00 - 22:00',
-    price: '1인당 20,000원 ~ 30,000원',
-    tags: ['이탈리안', '파스타', '피자', '와인'],
-    features: [
-      { icon: faCar, label: '주차 가능' },
-      { icon: faChild, label: '놀이 시설' },
-    ],
-  };
-  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!id) {
+      setError('유효하지 않은 ID입니다.');
+      setLoading(false);
+      return;
+    }
+
+    const fetchItem = async () => {    
+      setLoading(true);
+      try {
+        const placeData = await getPlaceDetailData(id);
+        setPlaceItem(placeData);
+      } catch (err) {
+        console.error('Failed to fetch play data:', err);
+        setError('놀이 정보를 불러오는 데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchItem();
+  }, [id]);
+
   const handleGoBack = () => {
     navigate(-1);
   };
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!placeItem) return <div>No data available</div>;
 
   return (
     <div className='App'>
@@ -57,39 +63,41 @@ const PlaceDetail: React.FC = () => {
             pointerEvents: 'none' 
         }}
         >
-        {placeDetail.category}
+        {placeItem.maincate.name}
         </Button>
-        <h2 className="mt-2 mb-4"><strong>{placeDetail.name}</strong></h2>
+        <h2 className="mt-2 mb-4"><strong>{placeItem.name}</strong></h2>
         
         <Card className="mb-4" style={{ border: 'none' }}>
         <CardBody>
           <Row className="mb-3">
-          {placeDetail.features.map((feature, index) => (
-              <Col key={index} xs="auto" className="text-center m-2">
-              <FontAwesomeIcon icon={feature.icon} size="2x" className="mb-2" />
-              <div style={{ fontSize: '0.8rem', pointerEvents: 'none' }}>{feature.label}</div>
+              <Col xs="auto" className="text-center m-2">
+                <FontAwesomeIcon icon={faCar} size="2x" className="mb-2" />
+                <div style={{ fontSize: '0.8rem', pointerEvents: 'none' }}>{placeItem['parking-type']}</div>
               </Col>
-          ))}
+              <Col xs="auto" className="text-center m-2">
+                <FontAwesomeIcon icon={faChild} size="2x" className="mb-2" />
+                <div style={{ fontSize: '0.8rem', pointerEvents: 'none' }}>{placeItem.type}</div>
+              </Col>
           </Row>
           
           <hr style={{ border: 'none', height: '2px', backgroundColor: '#e9ecef' }} />
           
           <Row>
           <Col md={6}>
-              <p><FontAwesomeIcon icon={faMapMarkerAlt} className="me-2" />{placeDetail.address}</p>
-              <p><FontAwesomeIcon icon={faPhone} className="me-2" />{placeDetail.phone}</p>
-              <p><FontAwesomeIcon icon={faClock} className="me-2" />{placeDetail.openingHours}</p>
+              <p><FontAwesomeIcon icon={faMapMarkerAlt} className="me-2" />{placeItem["new-address"]}</p>
+              <p><FontAwesomeIcon icon={faPhone} className="me-2" />{placeItem.phone}</p>
+              <p><FontAwesomeIcon icon={faClock} className="me-2" />{placeItem['operate-time']? placeItem['operate-time']: '정보없음'}</p>
           </Col>
           <Col md={6}>
               <p><strong>가격 정보</strong></p>
-              <p>{placeDetail.price}</p>
+              <p>{placeItem['is-free']}</p>
           </Col>
           </Row>
           
           <hr style={{ border: 'none', height: '2px', backgroundColor: '#e9ecef' }} />
           
           <div>
-          {placeDetail.tags.map((tag, index) => (
+          {placeItem.keywords.map((keyword, index) => (
               <Button
               key={index}
               color="primary"
@@ -98,7 +106,7 @@ const PlaceDetail: React.FC = () => {
               className="me-2 mb-2 rounded-pill"
               style={{ fontSize: '0.8rem', pointerEvents: 'none' }}
               >
-              {tag}
+              {keyword.keywordName}
               </Button>
           ))}
           </div>
