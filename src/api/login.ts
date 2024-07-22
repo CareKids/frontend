@@ -92,6 +92,8 @@ export const Login = async (LoginData: LoginData): Promise<any> => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
       },
       body: JSON.stringify({
         email: LoginData.email,
