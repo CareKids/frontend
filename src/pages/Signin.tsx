@@ -29,6 +29,24 @@ const Signin = () => {
     const [ageTags, setAgeTags] = useState<AgeTag[]>([]);
     const [selectedRegion, setSelectedRegion] = useState('');
     const [childrenAges, setChildrenAges] = useState(['']);    
+    const [privacyPolicyAgreed, setPrivacyPolicyAgreed] = useState(false);
+    const [privacyPolicyText, setPrivacyPolicyText] = useState('');
+
+    useEffect(() => {
+        const fetchPrivacyPolicy = async () => {
+            try {
+                const response = await fetch('/assets/privacy.txt');
+                const text = await response.text();
+                setPrivacyPolicyText(text);
+            } catch (error) {
+                console.error('Failed to load privacy policy:', error);
+                setPrivacyPolicyText('Failed to load privacy policy. Please try again later.');
+            }
+        };
+
+        fetchPrivacyPolicy();
+    }, []);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -182,6 +200,26 @@ const Signin = () => {
                         <h2 className="text-center mt-4 mb-5">회원가입</h2>
                         <Form onSubmit={handleSubmit}>
                             <FormGroup className="mb-3">
+                                <label>개인정보 처리방침</label>
+                                <Input
+                                    type="textarea"
+                                    value={privacyPolicyText}
+                                    readOnly
+                                    style={{ height: '200px', resize: 'none' }}
+                                />
+                            </FormGroup>
+                            <FormGroup check className="mb-3">
+                                <Input
+                                    type="checkbox"
+                                    id="privacyPolicyAgreement"
+                                    checked={privacyPolicyAgreed}
+                                    onChange={(e) => setPrivacyPolicyAgreed(e.target.checked)}
+                                />
+                                <label htmlFor="privacyPolicyAgreement">
+                                    개인정보 처리방침에 동의합니다.
+                                </label>
+                            </FormGroup>
+                            <FormGroup className="mb-3">
                                 <label>이메일</label>
                                 <Row className="mt-1 g-2">
                                     <Col xs="4">
@@ -235,7 +273,7 @@ const Signin = () => {
                                     className="p-2"
                                     style={{ minWidth: '100%' }}
                                     onClick={handleSendVerification}
-                                    disabled={isEmailVerified}
+                                    disabled={!privacyPolicyAgreed || isEmailVerified}
                                 >
                                     이메일 인증
                                 </Button>
