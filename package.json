@@ -21,6 +21,7 @@
     "@types/reactstrap": "^8.7.2",
     "bootstrap": "^5.3.3",
     "jquery": "^3.7.1",
+    "js-cookie": "^3.0.5",
     "popper.js": "^1.16.1",
     "react": "^18.3.1",
     "react-app-polyfill": "^2.0.0",
@@ -60,6 +61,7 @@
   },
   "devDependencies": {
     "@types/bootstrap": "^5.2.10",
+    "@types/js-cookie": "^3.0.6",
     "@types/navermaps": "^3.7.5"
   }
 }
